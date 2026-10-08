@@ -14,70 +14,82 @@ import {
 export class Api {
   private readonly http = inject(HttpClient);
 
-  property() {
-    return this.http.get<Property>('/api/property');
+  properties() {
+    return this.http.get<Property[]>('api/properties');
   }
 
-  saveProperty(body: unknown) {
-    return this.http.put<Property>('/api/property', body);
+  property(slug?: string) {
+    return slug
+      ? this.http.get<Property>(`api/properties/${slug}`)
+      : this.http.get<Property>('api/property');
   }
 
-  saveSignature(name: string) {
-    return this.http.post<Property>('/api/property/signature', { name });
+  saveProperty(body: unknown, slug?: string) {
+    return slug
+      ? this.http.put<Property>(`api/properties/${slug}`, body)
+      : this.http.put<Property>('api/property', body);
   }
 
-  availability(from: string, to: string) {
-    return this.http.get<DayMark[]>('/api/availability', { params: { from, to } });
+  saveSignature(name: string, slug?: string) {
+    return this.http.post<Property>('api/property/signature', { name }, {
+      params: slug ? { slug } : {},
+    });
   }
 
-  quote(checkIn: string, checkOut: string) {
-    return this.http.post<Quote>('/api/quotes', { checkIn, checkOut });
+  availability(from: string, to: string, slug?: string) {
+    return this.http.get<DayMark[]>('api/availability', {
+      params: slug ? { from, to, slug } : { from, to },
+    });
+  }
+
+  quote(checkIn: string, checkOut: string, slug?: string) {
+    return this.http.post<Quote>('api/quotes', { checkIn, checkOut, propertySlug: slug ?? null });
   }
 
   requestStay(body: unknown) {
-    return this.http.post<BookingDetail>('/api/bookings', body);
+    return this.http.post<BookingDetail>('api/bookings', body);
   }
 
   bookings(status?: string) {
-    return this.http.get<BookingSummary[]>('/api/bookings', {
+    return this.http.get<BookingSummary[]>('api/bookings', {
       params: status ? { status } : {},
     });
   }
 
   booking(id: string) {
-    return this.http.get<BookingDetail>(`/api/bookings/${id}`);
+    return this.http.get<BookingDetail>(`api/bookings/${id}`);
   }
 
   approve(id: string) {
-    return this.http.post<BookingDetail>(`/api/bookings/${id}/approve`, {});
+    return this.http.post<BookingDetail>(`api/bookings/${id}/approve`, {});
   }
 
   decline(id: string) {
-    return this.http.post<BookingDetail>(`/api/bookings/${id}/decline`, {});
+    return this.http.post<BookingDetail>(`api/bookings/${id}/decline`, {});
   }
 
   cancel(id: string) {
-    return this.http.post<BookingDetail>(`/api/bookings/${id}/cancel`, {});
+    return this.http.post<BookingDetail>(`api/bookings/${id}/cancel`, {});
   }
 
   guest(token: string) {
-    return this.http.get<BookingDetail>(`/api/guest/${token}`);
+    return this.http.get<BookingDetail>(`api/guest/${token}`);
   }
 
   sign(token: string, body: unknown) {
-    return this.http.post<BookingDetail>(`/api/guest/${token}/sign`, body);
+    return this.http.post<BookingDetail>(`api/guest/${token}/sign`, body);
   }
 
   pay(invoiceId: string, body: unknown) {
-    return this.http.post<BookingDetail>(`/api/invoices/${invoiceId}/payments`, body);
+    return this.http.post<BookingDetail>(`api/invoices/${invoiceId}/payments`, body);
   }
 
   dashboard() {
-    return this.http.get<Dashboard>('/api/dashboard');
+    return this.http.get<Dashboard>('api/dashboard');
   }
 
   outbox() {
-    return this.http.get<OutboxMessage[]>('/api/outbox');
+    return this.http.get<OutboxMessage[]>('api/outbox');
   }
 
   readError(error: unknown): string {

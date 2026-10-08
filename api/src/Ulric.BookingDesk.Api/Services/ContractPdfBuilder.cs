@@ -10,7 +10,7 @@ public sealed class ContractPdfBuilder
 {
     private static readonly CultureInfo Money = CultureInfo.GetCultureInfo("en-US");
 
-    public byte[] Build(Booking booking, StayContract contract, byte[]? hostSignature, byte[]? guestSignature)
+    public byte[] Build(Booking booking, StayContract contract, byte[]? hostSignature, byte[]? guestSignature, string rateLabel = "night", string feeLabel = "Cleaning fee")
     {
         var document = Document.Create(container =>
         {
@@ -24,7 +24,7 @@ public sealed class ContractPdfBuilder
                 page.Header().Column(column =>
                 {
                     column.Item().Text("Ulric studio").FontSize(11).FontColor("#d97757");
-                    column.Item().PaddingTop(4).Text("Stay agreement").FontSize(26);
+                    column.Item().PaddingTop(4).Text(AgreementTitle(rateLabel)).FontSize(26);
                     column.Item().PaddingTop(8).LineHorizontal(1).LineColor("#d97757");
                 });
 
@@ -34,7 +34,7 @@ public sealed class ContractPdfBuilder
                     column.Item().Text(contract.PropertyName).FontSize(18);
                     column.Item().Text($"Host: {contract.HostName}");
                     column.Item().Text($"Guest: {booking.GuestName}");
-                    column.Item().Text($"Dates: {Format(booking.CheckIn)} to {Format(booking.CheckOut)} ({booking.Nights} nights, {booking.Guests} guests)");
+                    column.Item().Text($"Dates: {Format(booking.CheckIn)} to {Format(booking.CheckOut)} ({booking.Nights} {Plural(rateLabel, booking.Nights)}, {booking.Guests} {(booking.Guests == 1 ? "guest" : "guests")})");
 
                     column.Item().PaddingTop(12).Text("Price").FontSize(14);
                     column.Item().Table(table =>
@@ -45,8 +45,8 @@ public sealed class ContractPdfBuilder
                             columns.ConstantColumn(120);
                         });
 
-                        Row(table, $"{booking.Nights} nights at {booking.NightlyRate.ToString("C", Money)}", booking.StaySubtotal);
-                        Row(table, "Cleaning fee", booking.CleaningFee);
+                        Row(table, $"{booking.Nights} {Plural(rateLabel, booking.Nights)} at {booking.NightlyRate.ToString("C", Money)}", booking.StaySubtotal);
+                        Row(table, string.IsNullOrWhiteSpace(feeLabel) ? "Cleaning fee" : feeLabel, booking.CleaningFee);
                         Row(table, "Service fee", booking.ServiceFee);
                         Row(table, "Total", booking.Total);
                         Row(table, $"Deposit due {Format(booking.DepositDue)}", booking.DepositAmount);
@@ -131,4 +131,18 @@ public sealed class ContractPdfBuilder
     }
 
     private static string Format(DateOnly day) => day.ToString("MMMM d, yyyy", CultureInfo.InvariantCulture);
+
+    private static string AgreementTitle(string rateLabel) =>
+        rateLabel.Contains("session", StringComparison.OrdinalIgnoreCase) ? "Session agreement" : "Stay agreement";
+
+    internal static string Plural(string label, int count)
+    {
+        var unit = string.IsNullOrWhiteSpace(label) ? "night" : label.Trim().ToLowerInvariant();
+        if (count == 1 || unit.EndsWith('s'))
+        {
+            return unit;
+        }
+
+        return unit + "s";
+    }
 }

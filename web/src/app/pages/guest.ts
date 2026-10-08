@@ -30,6 +30,8 @@ export class Guest {
 
   signatureName = '';
   private pointerDown = false;
+  private last: { x: number; y: number; t: number } | null = null;
+  private mid: { x: number; y: number } | null = null;
   private readonly pad = viewChild<ElementRef<HTMLCanvasElement>>('pad');
 
   constructor() {
@@ -109,10 +111,10 @@ export class Guest {
     canvas.setPointerCapture(event.pointerId);
     const point = this.point(canvas, event);
     context.strokeStyle = '#1f1e1d';
-    context.lineWidth = 2.4;
     context.lineCap = 'round';
-    context.beginPath();
-    context.moveTo(point.x, point.y);
+    context.lineJoin = 'round';
+    this.last = { ...point, t: performance.now() };
+    this.mid = point;
     this.pointerDown = true;
   }
 
@@ -126,13 +128,28 @@ export class Guest {
       return;
     }
     const point = this.point(canvas, event);
-    context.lineTo(point.x, point.y);
+    const last = this.last;
+    const mid = this.mid;
+    if (!last || !mid) {
+      return;
+    }
+    const now = performance.now();
+    const speed = Math.hypot(point.x - last.x, point.y - last.y) / Math.max(now - last.t, 8);
+    context.lineWidth = Math.max(0.7, Math.min(3.8, 3.2 - speed * 4));
+    const next = { x: (last.x + point.x) / 2, y: (last.y + point.y) / 2 };
+    context.beginPath();
+    context.moveTo(mid.x, mid.y);
+    context.quadraticCurveTo(last.x, last.y, next.x, next.y);
     context.stroke();
+    this.mid = next;
+    this.last = { ...point, t: now };
     this.drawing.set(true);
   }
 
   endDraw(): void {
     this.pointerDown = false;
+    this.last = null;
+    this.mid = null;
   }
 
   clearPad(): void {
@@ -143,6 +160,8 @@ export class Guest {
     }
     context.clearRect(0, 0, canvas.width, canvas.height);
     this.drawing.set(false);
+    this.last = null;
+    this.mid = null;
   }
 
   private renderTyped(name: string): string {

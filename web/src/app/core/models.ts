@@ -25,6 +25,14 @@ export interface Property {
   hostSignatureName: string;
   hasHostSignature: boolean;
   currency: string;
+  slug: string;
+  kind: string;
+  sortOrder: number;
+  heroImage: string;
+  gallery: string[];
+  rateLabel: string;
+  feeLabel: string;
+  invoicePrefix: string;
 }
 
 export interface DayMark {
@@ -112,10 +120,15 @@ export interface BookingSummary {
   contractStatus: 'Unsigned' | 'Signed' | null;
   invoiceStatus: 'Unpaid' | 'Partial' | 'Paid' | 'Overdue' | null;
   amountPaid: number;
+  propertyName: string;
+  propertySlug: string;
 }
 
 export interface BookingDetail extends BookingSummary {
   guestPath: string;
+  guestUrl: string | null;
+  propertyName: string;
+  propertySlug: string;
   nightlyRate: number;
   staySubtotal: number;
   cleaningFee: number;

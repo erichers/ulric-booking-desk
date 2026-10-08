@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:mamp": "ng build --base-href /grokbot/asp/ulric-booking-desk/",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },

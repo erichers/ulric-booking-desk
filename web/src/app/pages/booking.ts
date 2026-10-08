@@ -106,7 +106,9 @@ export class BookingPage {
     if (!stay) {
       return;
     }
-    const url = `${location.origin}${stay.guestPath}`;
+    const url = stay.guestUrl
+      ? stay.guestUrl
+      : new URL(stay.guestPath.replace(/^\//, ''), document.baseURI).href;
     await navigator.clipboard.writeText(url);
     this.notice.set('Guest link copied.');
   }

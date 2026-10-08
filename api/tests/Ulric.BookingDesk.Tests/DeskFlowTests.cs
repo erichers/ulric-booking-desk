@@ -25,6 +25,7 @@ public class DeskApiFactory : WebApplicationFactory<Program>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
+                ["Database:Provider"] = "Sqlite",
                 ["ConnectionStrings:Default"] = $"Data Source={Path.Combine(_directory, "test.db")}",
                 ["Storage:Root"] = _directory,
                 ["Desk:RemindersEnabled"] = "false",
@@ -35,6 +36,7 @@ public class DeskApiFactory : WebApplicationFactory<Program>
 
     private void ApplyIsolation()
     {
+        Environment.SetEnvironmentVariable("Database__Provider", "Sqlite");
         Environment.SetEnvironmentVariable("ConnectionStrings__Default", $"Data Source={Path.Combine(_directory, "test.db")}");
         Environment.SetEnvironmentVariable("Storage__Root", _directory);
         Environment.SetEnvironmentVariable("Desk__RemindersEnabled", "false");
@@ -43,6 +45,7 @@ public class DeskApiFactory : WebApplicationFactory<Program>
 
     protected override void Dispose(bool disposing)
     {
+        Environment.SetEnvironmentVariable("Database__Provider", null);
         Environment.SetEnvironmentVariable("ConnectionStrings__Default", null);
         Environment.SetEnvironmentVariable("Storage__Root", null);
         Environment.SetEnvironmentVariable("Desk__RemindersEnabled", null);
@@ -68,10 +71,11 @@ public class DeskFlowTests : IClassFixture<DeskApiFactory>
     public DeskFlowTests(DeskApiFactory factory) => _client = factory.CreateClient();
 
     [Fact]
-    public async Task Seed_opens_on_juniper_cottage_with_the_demo_handle()
+    public async Task Seed_opens_on_north_room_with_the_demo_handle()
     {
         var property = await _client.GetFromJsonAsync<JsonElement>("/api/property");
-        Assert.Equal("Juniper Cottage", property.GetProperty("name").GetString());
+        Assert.Equal("North Room", property.GetProperty("name").GetString());
+        Assert.Equal("north-room", property.GetProperty("slug").GetString());
         Assert.Equal("ulric-demo", property.GetProperty("paypalHandle").GetString());
         Assert.Equal("ulric-demo", property.GetProperty("venmoHandle").GetString());
         Assert.True(property.GetProperty("hasHostSignature").GetBoolean());
@@ -159,6 +163,47 @@ public class DeskFlowTests : IClassFixture<DeskApiFactory>
             reference = "DEMO-BAL"
         });
         Assert.Equal("Paid", paid.GetProperty("invoiceStatus").GetString());
+
+        var invoicePdf = await _client.GetAsync($"/api/guest/{token}/invoice.pdf");
+        invoicePdf.EnsureSuccessStatusCode();
+        var invoiceBytes = await invoicePdf.Content.ReadAsByteArrayAsync();
+        Assert.Equal("%PDF", System.Text.Encoding.ASCII.GetString(invoiceBytes, 0, 4));
+    }
+
+    [Fact]
+    public async Task Catalog_keeps_studio_and_photographer_calendars_apart()
+    {
+        var list = await _client.GetFromJsonAsync<JsonElement>("/api/properties");
+        Assert.Equal(2, list.GetArrayLength());
+        Assert.Contains(list.EnumerateArray(), item => item.GetProperty("slug").GetString() == "mara-ellison");
+
+        var checkIn = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(120);
+        var studio = await PostJson("/api/bookings", new
+        {
+            checkIn,
+            checkOut = checkIn.AddDays(2),
+            guests = 2,
+            guestName = "Studio Guest",
+            guestEmail = "studio@example.com",
+            guestPhone = "",
+            notes = "",
+            propertySlug = "north-room"
+        });
+        Assert.Equal("Requested", studio.GetProperty("status").GetString());
+
+        var sameDates = await PostJson("/api/bookings", new
+        {
+            checkIn,
+            checkOut = checkIn.AddDays(2),
+            guests = 1,
+            guestName = "Portrait Guest",
+            guestEmail = "portrait@example.com",
+            guestPhone = "",
+            notes = "",
+            propertySlug = "mara-ellison"
+        });
+        Assert.Equal("Requested", sameDates.GetProperty("status").GetString());
+        Assert.Equal("mara-ellison", sameDates.GetProperty("propertySlug").GetString());
     }
 
     private async Task<JsonElement> PostJson(string url, object body)

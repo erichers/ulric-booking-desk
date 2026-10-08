@@ -6,15 +6,22 @@
   <div class="skeleton block"></div>
 } @else if (draft; as draft) {
   <form class="panel stack" (submit)="$event.preventDefault(); save()">
+    <label>Listing
+      <select name="listing" [ngModel]="slug" (ngModelChange)="pick($event)">
+        @for (item of listings(); track item.slug) {
+          <option [value]="item.slug">{{ item.name }}</option>
+        }
+      </select>
+    </label>
     <div class="field-grid">
-      <label>Cottage name <input name="name" [(ngModel)]="draft.name" required /></label>
+      <label>Listing name <input name="name" [(ngModel)]="draft.name" required /></label>
       <label>Host name <input name="hostName" [(ngModel)]="draft.hostName" required /></label>
       <label>Tagline <input name="tagline" [(ngModel)]="draft.tagline" /></label>
       <label>Location <input name="locationLabel" [(ngModel)]="draft.locationLabel" /></label>
       <label>Email <input name="contactEmail" [(ngModel)]="draft.contactEmail" /></label>
       <label>Phone <input name="contactPhone" [(ngModel)]="draft.contactPhone" /></label>
-      <label>Nightly rate <input type="number" name="nightlyRate" min="0" step="0.01" [(ngModel)]="draft.nightlyRate" /></label>
-      <label>Cleaning fee <input type="number" name="cleaningFee" min="0" step="0.01" [(ngModel)]="draft.cleaningFee" /></label>
+      <label>Rate <input type="number" name="nightlyRate" min="0" step="0.01" [(ngModel)]="draft.nightlyRate" /></label>
+      <label>{{ draft.feeLabel || 'Fee' }} <input type="number" name="cleaningFee" min="0" step="0.01" [(ngModel)]="draft.cleaningFee" /></label>
       <label>Service fee <input type="number" name="serviceFee" min="0" step="0.01" [(ngModel)]="draft.serviceFee" /></label>
       <label>Deposit percent <input type="number" name="depositPercent" min="0" max="100" step="0.01" [(ngModel)]="draft.depositPercent" /></label>
       <label>Minimum nights <input type="number" name="minNights" min="1" [(ngModel)]="draft.minNights" /></label>
@@ -39,7 +46,7 @@
     <label>Signature name <input name="hostSignatureName" [(ngModel)]="draft.hostSignatureName" /></label>
     <p class="script preview">{{ draft.hostSignatureName || 'Signature' }}</p>
     @if (draft.hasHostSignature) {
-      <img class="signature-preview" [src]="'/api/property/signature?v=' + signatureStamp()" alt="Saved host signature" />
+      <img class="signature-preview" [src]="'api/property/signature?slug=' + slug + '&v=' + signatureStamp()" alt="Saved host signature" />
     }
     <button class="primary" type="submit" [disabled]="saving()">Save signature</button>
   </form>

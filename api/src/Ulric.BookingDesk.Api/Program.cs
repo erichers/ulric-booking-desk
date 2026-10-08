@@ -2,6 +2,8 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
+using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using QuestPDF.Infrastructure;
 using Ulric.BookingDesk.Api;
 using Ulric.BookingDesk.Api.Data;
@@ -11,13 +13,35 @@ QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = ResolveSqlite(builder.Configuration.GetConnectionString("Default") ?? "Data Source=data/ulric.db", builder.Environment.ContentRootPath);
-builder.Services.AddDbContext<DeskDb>(options => options.UseSqlite(connectionString));
+var provider = builder.Configuration["Database:Provider"] ?? "Sqlite";
+builder.Services.AddDbContext<DeskDb>(options =>
+{
+    if (provider.Equals("MySql", StringComparison.OrdinalIgnoreCase))
+    {
+        var mysql = builder.Configuration.GetConnectionString("MySql");
+        if (string.IsNullOrWhiteSpace(mysql))
+        {
+            throw new InvalidOperationException("ConnectionStrings:MySql is required when Database:Provider is MySql.");
+        }
+
+        mysql = WithUtf8(mysql);
+        var version = ResolveMySqlVersion(mysql, builder.Configuration["Database:MySqlVersion"]);
+        options.UseMySql(mysql, version, mysqlOptions => mysqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(2), null));
+    }
+    else
+    {
+        var connectionString = ResolveSqlite(
+            builder.Configuration.GetConnectionString("Default") ?? "Data Source=data/ulric.db",
+            builder.Environment.ContentRootPath);
+        options.UseSqlite(connectionString);
+    }
+});
 builder.Services.Configure<DeskOptions>(builder.Configuration.GetSection("Desk"));
 builder.Services.AddSingleton<IDeskClock, DeskClock>();
 builder.Services.AddSingleton<StoragePaths>();
 builder.Services.AddSingleton<SignatureRenderer>();
 builder.Services.AddSingleton<ContractPdfBuilder>();
+builder.Services.AddSingleton<InvoicePdfBuilder>();
 builder.Services.AddSingleton<INotificationProvider, LoggingNotificationProvider>();
 builder.Services.AddScoped<ReminderDispatcher>();
 builder.Services.AddScoped<BookingWorkflow>();
@@ -39,7 +63,7 @@ Directory.CreateDirectory(Path.Combine(app.Environment.ContentRootPath, "data"))
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<DeskDb>();
-    db.Database.EnsureCreated();
+    db.Database.Migrate();
     var workflow = scope.ServiceProvider.GetRequiredService<BookingWorkflow>();
     var clock = scope.ServiceProvider.GetRequiredService<IDeskClock>();
     await Seeder.SeedAsync(workflow, db, clock, CancellationToken.None);
@@ -68,6 +92,27 @@ if (app.Environment.IsDevelopment())
 app.UseCors();
 app.MapControllers();
 app.Run();
+
+static string WithUtf8(string connectionString)
+{
+    var builder = new MySqlConnectionStringBuilder(connectionString);
+    if (string.IsNullOrWhiteSpace(builder.CharacterSet))
+    {
+        builder.CharacterSet = "utf8mb4";
+    }
+
+    return builder.ConnectionString;
+}
+
+static ServerVersion ResolveMySqlVersion(string connectionString, string? configured)
+{
+    if (string.IsNullOrWhiteSpace(configured) || configured.Equals("AutoDetect", StringComparison.OrdinalIgnoreCase))
+    {
+        return ServerVersion.AutoDetect(connectionString);
+    }
+
+    return ServerVersion.Parse(configured);
+}
 
 static string ResolveSqlite(string connectionString, string contentRoot)
 {

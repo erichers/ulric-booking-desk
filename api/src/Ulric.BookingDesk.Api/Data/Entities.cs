@@ -51,6 +51,14 @@ public class Property
     public string HostSignatureName { get; set; } = "";
     public string? HostSignaturePath { get; set; }
     public string Currency { get; set; } = "USD";
+    public string Slug { get; set; } = "";
+    public string Kind { get; set; } = "Rental";
+    public int SortOrder { get; set; }
+    public string HeroImage { get; set; } = "";
+    public string GalleryJson { get; set; } = "[]";
+    public string RateLabel { get; set; } = "night";
+    public string FeeLabel { get; set; } = "Cleaning fee";
+    public string InvoicePrefix { get; set; } = "NR";
 }
 
 public class Booking

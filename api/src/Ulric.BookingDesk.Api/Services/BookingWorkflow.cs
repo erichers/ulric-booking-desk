@@ -1,5 +1,6 @@
 using System.Net.Mail;
 using System.Security.Cryptography;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Ulric.BookingDesk.Api.Data;
@@ -19,26 +20,33 @@ public sealed class BookingWorkflow(
     IOptions<DeskOptions> options,
     StoragePaths storage,
     SignatureRenderer signatures,
-    ContractPdfBuilder pdfs)
+    ContractPdfBuilder pdfs,
+    InvoicePdfBuilder invoices)
 {
     private static readonly HashSet<string> PaymentMethods = new(StringComparer.OrdinalIgnoreCase)
     {
         "PayPal", "Venmo", "Cash", "Check", "Other"
     };
 
-    public async Task<PropertyDto> GetPropertyAsync(CancellationToken cancellationToken) =>
-        MapProperty(await PropertyAsync(cancellationToken));
-
-    public async Task<byte[]?> HostSignatureAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<PropertyDto>> ListPropertiesAsync(CancellationToken cancellationToken)
     {
-        var property = await PropertyAsync(cancellationToken);
+        var rows = await db.Properties.OrderBy(property => property.SortOrder).ThenBy(property => property.Name).ToListAsync(cancellationToken);
+        return rows.Select(MapProperty).ToList();
+    }
+
+    public async Task<PropertyDto> GetPropertyAsync(CancellationToken cancellationToken, string? slug = null) =>
+        MapProperty(await PropertyAsync(cancellationToken, slug));
+
+    public async Task<byte[]?> HostSignatureAsync(CancellationToken cancellationToken, string? slug = null)
+    {
+        var property = await PropertyAsync(cancellationToken, slug);
         return storage.Read(property.HostSignaturePath);
     }
 
-    public async Task<PropertyDto> UpdatePropertyAsync(PropertyUpdate update, CancellationToken cancellationToken)
+    public async Task<PropertyDto> UpdatePropertyAsync(PropertyUpdate update, CancellationToken cancellationToken, string? slug = null)
     {
         ValidateProperty(update);
-        var property = await PropertyAsync(cancellationToken);
+        var property = await PropertyAsync(cancellationToken, slug);
         property.Name = update.Name.Trim();
         property.HostName = update.HostName.Trim();
         property.Tagline = update.Tagline.Trim();
@@ -66,7 +74,7 @@ public sealed class BookingWorkflow(
         return MapProperty(property);
     }
 
-    public async Task<PropertyDto> SaveHostSignatureAsync(string name, CancellationToken cancellationToken)
+    public async Task<PropertyDto> SaveHostSignatureAsync(string name, CancellationToken cancellationToken, string? slug = null)
     {
         var trimmed = (name ?? "").Trim();
         if (trimmed.Length < 2 || trimmed.Length > 80)
@@ -74,9 +82,9 @@ public sealed class BookingWorkflow(
             throw new DeskException(400, "Enter the host signature name.");
         }
 
-        var property = await PropertyAsync(cancellationToken);
+        var property = await PropertyAsync(cancellationToken, slug);
         var png = signatures.RenderTyped(trimmed);
-        const string relative = "signatures/host.png";
+        var relative = $"signatures/{property.Id:N}-host.png";
         await storage.SaveAsync(relative, png, cancellationToken);
         property.HostSignatureName = trimmed;
         property.HostSignaturePath = relative;
@@ -84,7 +92,7 @@ public sealed class BookingWorkflow(
         return MapProperty(property);
     }
 
-    public async Task<IReadOnlyList<DayMarkDto>> AvailabilityAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<DayMarkDto>> AvailabilityAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken, string? slug = null)
     {
         if (to < from)
         {
@@ -96,8 +104,9 @@ public sealed class BookingWorkflow(
             throw new DeskException(400, "Ask for 400 days or fewer.");
         }
 
+        var property = await PropertyAsync(cancellationToken, slug);
         var stays = await db.Bookings
-            .Where(booking => booking.CheckOut > from && booking.CheckIn <= to)
+            .Where(booking => booking.PropertyId == property.Id && booking.CheckOut > from && booking.CheckIn <= to)
             .Select(booking => new { booking.CheckIn, booking.CheckOut, booking.Status })
             .ToListAsync(cancellationToken);
 
@@ -120,16 +129,16 @@ public sealed class BookingWorkflow(
         return days;
     }
 
-    public async Task<QuoteDto> QuoteAsync(DateOnly checkIn, DateOnly checkOut, CancellationToken cancellationToken)
+    public async Task<QuoteDto> QuoteAsync(DateOnly checkIn, DateOnly checkOut, CancellationToken cancellationToken, string? slug = null)
     {
-        var property = await PropertyAsync(cancellationToken);
+        var property = await PropertyAsync(cancellationToken, slug);
         var today = clock.Today(options.Value.TimeZone);
         return MapQuote(property, checkIn, checkOut, today);
     }
 
     public async Task<BookingDetailDto> CreateRequestAsync(CreateBookingRequest request, string? ip, CancellationToken cancellationToken)
     {
-        var property = await PropertyAsync(cancellationToken);
+        var property = await PropertyAsync(cancellationToken, request.PropertySlug);
         var name = (request.GuestName ?? "").Trim();
         var email = (request.GuestEmail ?? "").Trim();
         var phone = (request.GuestPhone ?? "").Trim();
@@ -173,10 +182,10 @@ public sealed class BookingWorkflow(
 
         if (quote.Nights < property.MinNights)
         {
-            throw new DeskException(400, $"This cottage asks for at least {property.MinNights} nights.");
+            throw new DeskException(400, $"This listing asks for at least {property.MinNights} {Unit(property, property.MinNights)}.");
         }
 
-        if (await HasConflictAsync(request.CheckIn, request.CheckOut, null, cancellationToken))
+        if (await HasConflictAsync(property.Id, request.CheckIn, request.CheckOut, null, cancellationToken))
         {
             throw new DeskException(409, "Those dates are already held or booked.");
         }
@@ -220,6 +229,7 @@ public sealed class BookingWorkflow(
     {
         var today = clock.Today(options.Value.TimeZone);
         var query = db.Bookings
+            .Include(booking => booking.Property)
             .Include(booking => booking.Contract)
             .Include(booking => booking.Invoice!).ThenInclude(invoice => invoice.Payments)
             .AsQueryable();
@@ -261,12 +271,12 @@ public sealed class BookingWorkflow(
             throw new DeskException(409, "Only a request can be approved.");
         }
 
-        if (await HasConflictAsync(booking.CheckIn, booking.CheckOut, booking.Id, cancellationToken, approvedOnly: true))
+        if (await HasConflictAsync(booking.PropertyId, booking.CheckIn, booking.CheckOut, booking.Id, cancellationToken, approvedOnly: true))
         {
             throw new DeskException(409, "Those dates are already booked.");
         }
 
-        var property = await PropertyAsync(cancellationToken);
+        var property = await PropertyForAsync(booking, cancellationToken);
         var now = clock.UtcNow;
         var today = clock.Today(options.Value.TimeZone);
         var (depositDue, balanceDue) = DueDates.Compute(today, booking.CheckIn);
@@ -280,7 +290,7 @@ public sealed class BookingWorkflow(
         {
             Id = Guid.NewGuid(),
             BookingId = booking.Id,
-            Number = await NextInvoiceNumberAsync(cancellationToken),
+            Number = await NextInvoiceNumberAsync(property, cancellationToken),
             IssuedOn = today
         };
         var reminders = NewReminders(booking, property, now);
@@ -380,7 +390,7 @@ public sealed class BookingWorkflow(
         booking.Contract.GuestSignaturePath = relative;
         booking.Contract.SignedAt = clock.UtcNow;
         booking.Contract.SignedIp = ip;
-        var property = await PropertyAsync(cancellationToken);
+        var property = await PropertyForAsync(booking, cancellationToken);
         await WriteContractPdfAsync(booking, booking.Contract, property, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
         return await DetailAsync(booking.Id, includeReminders: false, cancellationToken);
@@ -388,7 +398,7 @@ public sealed class BookingWorkflow(
 
     public async Task<(byte[] Bytes, string FileName)> ContractPdfAsync(Guid? id, string? token, CancellationToken cancellationToken)
     {
-        var query = db.Bookings.Include(item => item.Contract);
+        var query = db.Bookings.Include(item => item.Contract).Include(item => item.Property);
         var booking = id is Guid bookingId
             ? await query.FirstOrDefaultAsync(item => item.Id == bookingId, cancellationToken)
             : await query.FirstOrDefaultAsync(item => item.GuestToken == token, cancellationToken);
@@ -406,7 +416,7 @@ public sealed class BookingWorkflow(
         var bytes = storage.Read(path);
         if (bytes is null)
         {
-            var property = await PropertyAsync(cancellationToken);
+            var property = await PropertyForAsync(booking, cancellationToken);
             await WriteContractPdfAsync(booking, booking.Contract, property, cancellationToken);
             await db.SaveChangesAsync(cancellationToken);
             bytes = storage.Read(booking.Contract.PdfPath) ?? throw new DeskException(500, "The contract file could not be stored.");
@@ -466,6 +476,7 @@ public sealed class BookingWorkflow(
     {
         var today = clock.Today(options.Value.TimeZone);
         var bookings = await db.Bookings
+            .Include(booking => booking.Property)
             .Include(booking => booking.Contract)
             .Include(booking => booking.Invoice!).ThenInclude(invoice => invoice.Payments)
             .ToListAsync(cancellationToken);
@@ -567,7 +578,7 @@ public sealed class BookingWorkflow(
         {
             Id = Guid.NewGuid(),
             BookingId = booking.Id,
-            Number = await NextInvoiceNumberAsync(cancellationToken),
+            Number = await NextInvoiceNumberAsync(property, cancellationToken),
             IssuedOn = DateOnly.FromDateTime((booking.DecidedAt ?? now).UtcDateTime)
         };
 
@@ -622,13 +633,40 @@ public sealed class BookingWorkflow(
     {
         var host = storage.Read(property.HostSignaturePath);
         var guest = storage.Read(contract.GuestSignaturePath);
-        var bytes = pdfs.Build(booking, contract, host, guest);
+        var bytes = pdfs.Build(booking, contract, host, guest, property.RateLabel, property.FeeLabel);
         var relative = $"contracts/{booking.Id:N}.pdf";
         await storage.SaveAsync(relative, bytes, cancellationToken);
         contract.PdfPath = relative;
     }
 
+    public async Task<(byte[] Bytes, string FileName)> InvoicePdfAsync(Guid? id, string? token, CancellationToken cancellationToken)
+    {
+        var query = db.Bookings
+            .Include(item => item.Property)
+            .Include(item => item.Invoice!).ThenInclude(invoice => invoice.Payments);
+        var booking = id is Guid bookingId
+            ? await query.FirstOrDefaultAsync(item => item.Id == bookingId, cancellationToken)
+            : await query.FirstOrDefaultAsync(item => item.GuestToken == token, cancellationToken);
+        if (booking is null)
+        {
+            throw new DeskException(404, "That stay is not on the desk.");
+        }
+
+        if (booking.Invoice is null)
+        {
+            throw new DeskException(404, "There is no invoice for this stay yet.");
+        }
+
+        var property = await PropertyForAsync(booking, cancellationToken);
+        var today = clock.Today(options.Value.TimeZone);
+        var paid = Paid(booking);
+        var status = StatusOf(booking, paid, today) ?? InvoicePaymentStatus.Unpaid;
+        var bytes = invoices.Build(booking, property, status, paid);
+        return (bytes, $"{booking.Invoice.Number}.pdf");
+    }
+
     private async Task<bool> HasConflictAsync(
+        Guid propertyId,
         DateOnly checkIn,
         DateOnly checkOut,
         Guid? ignoreId,
@@ -636,7 +674,7 @@ public sealed class BookingWorkflow(
         bool approvedOnly = false)
     {
         var stays = await db.Bookings
-            .Where(booking => ignoreId == null || booking.Id != ignoreId)
+            .Where(booking => booking.PropertyId == propertyId && (ignoreId == null || booking.Id != ignoreId))
             .Select(booking => new { booking.CheckIn, booking.CheckOut, booking.Status })
             .ToListAsync(cancellationToken);
 
@@ -665,7 +703,7 @@ public sealed class BookingWorkflow(
         CreatedAt = createdAt
     };
 
-    private static List<Reminder> NewReminders(Booking booking, Property property, DateTimeOffset approvedAt)
+    private List<Reminder> NewReminders(Booking booking, Property property, DateTimeOffset approvedAt)
     {
         var plan = new ReminderPlan(
             property.Name,
@@ -681,6 +719,7 @@ public sealed class BookingWorkflow(
             property.CheckInTime,
             property.CheckInInstructions,
             approvedAt);
+        var link = PublicUrl.Combine(options.Value.PublicBaseUrl, $"/stay/{booking.GuestToken}");
         return ReminderScheduler.Schedule(plan).Select(draft => new Reminder
         {
             Id = Guid.NewGuid(),
@@ -691,18 +730,20 @@ public sealed class BookingWorkflow(
             Status = ReminderStatus.Pending,
             Recipient = draft.Recipient,
             Subject = draft.Subject,
-            Body = draft.Body
+            Body = link is null ? draft.Body : $"{draft.Body} Guest page: {link}"
         }).ToList();
     }
 
-    private async Task<string> NextInvoiceNumberAsync(CancellationToken cancellationToken)
+    private async Task<string> NextInvoiceNumberAsync(Property property, CancellationToken cancellationToken)
     {
-        var count = await db.Invoices.CountAsync(cancellationToken);
-        return $"JC-{count + 1001:0000}";
+        var prefix = string.IsNullOrWhiteSpace(property.InvoicePrefix) ? "UL" : property.InvoicePrefix.Trim().ToUpperInvariant();
+        var count = await db.Invoices.CountAsync(invoice => invoice.Number.StartsWith(prefix + "-"), cancellationToken);
+        return $"{prefix}-{count + 1001:0000}";
     }
 
     private async Task<Booking> LoadAsync(Guid id, CancellationToken cancellationToken) =>
         await db.Bookings
+            .Include(booking => booking.Property)
             .Include(booking => booking.Contract)
             .Include(booking => booking.Invoice!).ThenInclude(invoice => invoice.Payments)
             .Include(booking => booking.Reminders)
@@ -712,13 +753,32 @@ public sealed class BookingWorkflow(
     private async Task<BookingDetailDto> DetailAsync(Guid id, bool includeReminders, CancellationToken cancellationToken)
     {
         var booking = await LoadAsync(id, cancellationToken);
-        var property = await PropertyAsync(cancellationToken);
+        var property = await PropertyForAsync(booking, cancellationToken);
         var today = clock.Today(options.Value.TimeZone);
         return MapDetail(booking, property, today, includeReminders);
     }
 
-    private async Task<Property> PropertyAsync(CancellationToken cancellationToken) =>
-        await db.Properties.FirstAsync(cancellationToken);
+    private async Task<Property> PropertyAsync(CancellationToken cancellationToken, string? slug = null)
+    {
+        if (!string.IsNullOrWhiteSpace(slug))
+        {
+            var key = slug.Trim().ToLowerInvariant();
+            return await db.Properties.FirstOrDefaultAsync(property => property.Slug == key, cancellationToken)
+                ?? throw new DeskException(404, "That listing is not on the desk.");
+        }
+
+        return await db.Properties.OrderBy(property => property.SortOrder).ThenBy(property => property.Name).FirstAsync(cancellationToken);
+    }
+
+    private async Task<Property> PropertyForAsync(Booking booking, CancellationToken cancellationToken)
+    {
+        if (booking.Property is not null)
+        {
+            return booking.Property;
+        }
+
+        return await db.Properties.FirstAsync(property => property.Id == booking.PropertyId, cancellationToken);
+    }
 
     private static QuoteDto MapQuote(Property property, DateOnly checkIn, DateOnly checkOut, DateOnly today)
     {
@@ -773,13 +833,21 @@ public sealed class BookingWorkflow(
         property.VenmoHandle,
         property.HostSignatureName,
         !string.IsNullOrWhiteSpace(property.HostSignaturePath),
-        property.Currency);
+        property.Currency,
+        property.Slug,
+        property.Kind,
+        property.SortOrder,
+        RelativeAsset(property.HeroImage),
+        ReadGallery(property.GalleryJson).Select(RelativeAsset).ToList(),
+        string.IsNullOrWhiteSpace(property.RateLabel) ? "night" : property.RateLabel,
+        string.IsNullOrWhiteSpace(property.FeeLabel) ? "Cleaning fee" : property.FeeLabel,
+        property.InvoicePrefix);
 
     private static void ValidateProperty(PropertyUpdate update)
     {
         if (string.IsNullOrWhiteSpace(update.Name) || string.IsNullOrWhiteSpace(update.HostName))
         {
-            throw new DeskException(400, "The cottage and the host need names.");
+            throw new DeskException(400, "The listing and the host need names.");
         }
 
         if (update.NightlyRate < 0 || update.CleaningFee < 0 || update.ServiceFee < 0)
@@ -834,10 +902,12 @@ public sealed class BookingWorkflow(
             booking.CreatedAt,
             booking.Contract?.Status,
             StatusOf(booking, paid, today),
-            paid);
+            paid,
+            booking.Property?.Name ?? "",
+            booking.Property?.Slug ?? "");
     }
 
-    private static BookingDetailDto MapDetail(Booking booking, Property property, DateOnly today, bool includeReminders)
+    private BookingDetailDto MapDetail(Booking booking, Property property, DateOnly today, bool includeReminders)
     {
         var paid = Paid(booking);
         var status = StatusOf(booking, paid, today);
@@ -845,6 +915,9 @@ public sealed class BookingWorkflow(
             booking.Id,
             booking.GuestToken,
             $"/stay/{booking.GuestToken}",
+            PublicUrl.Combine(options.Value.PublicBaseUrl, $"/stay/{booking.GuestToken}"),
+            property.Name,
+            property.Slug,
             booking.GuestName,
             booking.GuestEmail,
             booking.GuestPhone,
@@ -909,8 +982,8 @@ public sealed class BookingWorkflow(
             remaining,
             depositRemaining,
             [
-                new LineDto($"{booking.Nights} nights", booking.StaySubtotal),
-                new LineDto("Cleaning fee", booking.CleaningFee),
+                new LineDto($"{booking.Nights} {Unit(property, booking.Nights)}", booking.StaySubtotal),
+                new LineDto(string.IsNullOrWhiteSpace(property.FeeLabel) ? "Cleaning fee" : property.FeeLabel, booking.CleaningFee),
                 new LineDto("Service fee", booking.ServiceFee)
             ],
             invoice.Payments
@@ -921,6 +994,37 @@ public sealed class BookingWorkflow(
             remaining > 0 ? PaymentLinks.Venmo(property.VenmoHandle, remaining, noteBase) : null,
             depositRemaining > 0 ? PaymentLinks.PayPal(property.PaypalHandle, depositRemaining) : null,
             depositRemaining > 0 ? PaymentLinks.Venmo(property.VenmoHandle, depositRemaining, $"{noteBase} deposit") : null);
+    }
+
+    private static string RelativeAsset(string path) =>
+        string.IsNullOrWhiteSpace(path) ? "" : path.TrimStart('/');
+
+    private static IReadOnlyList<string> ReadGallery(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return [];
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(json) ?? [];
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
+    }
+
+    private static string Unit(Property property, int count)
+    {
+        var label = string.IsNullOrWhiteSpace(property.RateLabel) ? "night" : property.RateLabel.Trim().ToLowerInvariant();
+        if (count == 1 || label.EndsWith('s'))
+        {
+            return label;
+        }
+
+        return label + "s";
     }
 
     private static decimal Paid(Booking booking) =>

@@ -16,6 +16,8 @@ export class Settings {
   readonly error = signal('');
   readonly notice = signal('');
   readonly signatureStamp = signal(Date.now());
+  readonly listings = signal<Property[]>([]);
+  slug = '';
   draft: Property | null = null;
 
   constructor() {
@@ -24,7 +26,10 @@ export class Settings {
 
   async load(): Promise<void> {
     try {
-      this.draft = structuredClone(await firstValueFrom(this.api.property()));
+      const listings = await firstValueFrom(this.api.properties());
+      this.listings.set(listings);
+      this.slug = this.slug || listings[0]?.slug || '';
+      this.draft = structuredClone(listings.find((item) => item.slug === this.slug) ?? listings[0] ?? null);
     } catch (error) {
       this.error.set(this.api.readError(error));
     } finally {
@@ -39,7 +44,9 @@ export class Settings {
     this.saving.set(true);
     this.error.set('');
     try {
-      this.draft = await firstValueFrom(this.api.saveProperty(this.draft));
+      this.draft = await firstValueFrom(this.api.saveProperty(this.draft, this.slug));
+      const saved = this.draft;
+      this.listings.update((rows) => rows.map((row) => (row.slug === this.slug && saved ? saved : row)));
       this.notice.set('Settings saved.');
     } catch (error) {
       this.error.set(this.api.readError(error));
@@ -55,13 +62,22 @@ export class Settings {
     this.saving.set(true);
     this.error.set('');
     try {
-      this.draft = await firstValueFrom(this.api.saveSignature(this.draft.hostSignatureName));
+      this.draft = await firstValueFrom(this.api.saveSignature(this.draft.hostSignatureName, this.slug));
       this.signatureStamp.set(Date.now());
+      const saved = this.draft;
+      this.listings.update((rows) => rows.map((row) => (row.slug === this.slug && saved ? saved : row)));
       this.notice.set('Host signature saved.');
     } catch (error) {
       this.error.set(this.api.readError(error));
     } finally {
       this.saving.set(false);
     }
+  }
+
+  pick(slug: string): void {
+    this.slug = slug;
+    this.notice.set('');
+    const match = this.listings().find((item) => item.slug === slug);
+    this.draft = match ? structuredClone(match) : this.draft;
   }
 }

@@ -4,7 +4,7 @@
 } @else if (stay(); as stay) {
   <p class="eyebrow"><a class="text-link" routerLink="/host/bookings">Bookings</a></p>
   <h1>{{ stay.guestName }}</h1>
-  <p class="lede">{{ prettyDate(stay.checkIn) }} to {{ prettyDate(stay.checkOut) }}, {{ stay.nights }} nights, {{ stay.guests }} guests.</p>
+  <p class="lede">{{ stay.propertyName }}. {{ prettyDate(stay.checkIn) }} to {{ prettyDate(stay.checkOut) }}, {{ stay.nights }} nights, {{ stay.guests }} guests.</p>
   <p class="chips">
     <span class="chip" [class]="'chip ' + chip(stay.status)">{{ label(stay.status) }}</span>
     @if (stay.contractStatus) {
@@ -29,7 +29,8 @@
     }
     <button class="ghost" type="button" (click)="copyLink()">Copy guest link</button>
     @if (stay.contract) {
-      <a class="text-link" [href]="'/api/bookings/' + stay.id + '/contract.pdf'">Download contract</a>
+      <a class="text-link" [href]="'api/bookings/' + stay.id + '/contract.pdf'">Download contract</a>
+      <a class="text-link" [href]="'api/bookings/' + stay.id + '/invoice.pdf'">Download invoice</a>
     }
   </div>
 
@@ -56,6 +57,9 @@
           <h2>Invoice {{ invoice.number }}</h2>
           <span class="chip" [class]="'chip ' + chip(invoice.status)">{{ label(invoice.status) }}</span>
         </div>
+        @if (invoice.status === 'Paid') {
+          <p class="paid-celebrate" role="status">Paid in full</p>
+        }
         <p>Paid {{ money(invoice.amountPaid) }}. Still due {{ money(invoice.amountDue) }}.</p>
         @if (invoice.payments.length) {
           <ul class="plain">

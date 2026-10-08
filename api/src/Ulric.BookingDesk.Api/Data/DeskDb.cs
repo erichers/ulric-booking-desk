@@ -14,9 +14,21 @@ public class DeskDb(DbContextOptions<DeskDb> options) : DbContext(options)
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Property>(p =>
+        {
+            p.HasIndex(x => x.Slug).IsUnique();
+            p.Property(x => x.Slug).HasMaxLength(80);
+            p.Property(x => x.GalleryJson).HasColumnType("text");
+            p.Property(x => x.Description).HasColumnType("text");
+            p.Property(x => x.HouseRules).HasColumnType("text");
+            p.Property(x => x.CancellationPolicy).HasColumnType("text");
+            p.Property(x => x.CheckInInstructions).HasColumnType("text");
+        });
+
         modelBuilder.Entity<Booking>(b =>
         {
             b.HasIndex(x => x.GuestToken).IsUnique();
+            b.Property(x => x.GuestToken).HasMaxLength(64);
             b.HasOne(x => x.Property).WithMany().HasForeignKey(x => x.PropertyId);
             b.HasOne(x => x.Contract).WithOne(x => x.Booking).HasForeignKey<StayContract>(x => x.BookingId);
             b.HasOne(x => x.Invoice).WithOne(x => x.Booking).HasForeignKey<Invoice>(x => x.BookingId);
@@ -26,6 +38,7 @@ public class DeskDb(DbContextOptions<DeskDb> options) : DbContext(options)
         modelBuilder.Entity<Invoice>(i =>
         {
             i.HasIndex(x => x.Number).IsUnique();
+            i.Property(x => x.Number).HasMaxLength(32);
             i.HasMany(x => x.Payments).WithOne(x => x.Invoice).HasForeignKey(x => x.InvoiceId);
         });
     }

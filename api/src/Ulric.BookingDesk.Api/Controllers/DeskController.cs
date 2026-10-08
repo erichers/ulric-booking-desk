@@ -11,6 +11,18 @@ public class DeskController(BookingWorkflow workflow) : ControllerBase
     [HttpGet("health")]
     public IActionResult Health() => Ok(new { status = "ok" });
 
+    [HttpGet("properties")]
+    public Task<IReadOnlyList<PropertyDto>> Properties(CancellationToken cancellationToken) =>
+        workflow.ListPropertiesAsync(cancellationToken);
+
+    [HttpGet("properties/{slug}")]
+    public Task<PropertyDto> PropertyBySlug(string slug, CancellationToken cancellationToken) =>
+        workflow.GetPropertyAsync(cancellationToken, slug);
+
+    [HttpPut("properties/{slug}")]
+    public Task<PropertyDto> UpdateBySlug(string slug, PropertyUpdate update, CancellationToken cancellationToken) =>
+        workflow.UpdatePropertyAsync(update, cancellationToken, slug);
+
     [HttpGet("property")]
     public Task<PropertyDto> Property(CancellationToken cancellationToken) =>
         workflow.GetPropertyAsync(cancellationToken);
@@ -20,23 +32,23 @@ public class DeskController(BookingWorkflow workflow) : ControllerBase
         workflow.UpdatePropertyAsync(update, cancellationToken);
 
     [HttpPost("property/signature")]
-    public Task<PropertyDto> Signature(SignatureUpdate update, CancellationToken cancellationToken) =>
-        workflow.SaveHostSignatureAsync(update.Name, cancellationToken);
+    public Task<PropertyDto> Signature(SignatureUpdate update, [FromQuery] string? slug, CancellationToken cancellationToken) =>
+        workflow.SaveHostSignatureAsync(update.Name, cancellationToken, slug);
 
     [HttpGet("property/signature")]
-    public async Task<IActionResult> SignatureImage(CancellationToken cancellationToken)
+    public async Task<IActionResult> SignatureImage([FromQuery] string? slug, CancellationToken cancellationToken)
     {
-        var bytes = await workflow.HostSignatureAsync(cancellationToken);
+        var bytes = await workflow.HostSignatureAsync(cancellationToken, slug);
         return bytes is null ? NotFound() : File(bytes, "image/png");
     }
 
     [HttpGet("availability")]
-    public Task<IReadOnlyList<DayMarkDto>> Availability([FromQuery] DateOnly from, [FromQuery] DateOnly to, CancellationToken cancellationToken) =>
-        workflow.AvailabilityAsync(from, to, cancellationToken);
+    public Task<IReadOnlyList<DayMarkDto>> Availability([FromQuery] DateOnly from, [FromQuery] DateOnly to, [FromQuery] string? slug, CancellationToken cancellationToken) =>
+        workflow.AvailabilityAsync(from, to, cancellationToken, slug);
 
     [HttpPost("quotes")]
     public Task<QuoteDto> Quote(QuoteRequest request, CancellationToken cancellationToken) =>
-        workflow.QuoteAsync(request.CheckIn, request.CheckOut, cancellationToken);
+        workflow.QuoteAsync(request.CheckIn, request.CheckOut, cancellationToken, request.PropertySlug);
 
     [HttpPost("bookings")]
     public Task<BookingDetailDto> Create(CreateBookingRequest request, CancellationToken cancellationToken) =>
@@ -81,6 +93,20 @@ public class DeskController(BookingWorkflow workflow) : ControllerBase
     public async Task<IActionResult> GuestContract(string token, CancellationToken cancellationToken)
     {
         var (bytes, name) = await workflow.ContractPdfAsync(null, token, cancellationToken);
+        return File(bytes, "application/pdf", name);
+    }
+
+    [HttpGet("bookings/{id:guid}/invoice.pdf")]
+    public async Task<IActionResult> HostInvoice(Guid id, CancellationToken cancellationToken)
+    {
+        var (bytes, name) = await workflow.InvoicePdfAsync(id, null, cancellationToken);
+        return File(bytes, "application/pdf", name);
+    }
+
+    [HttpGet("guest/{token}/invoice.pdf")]
+    public async Task<IActionResult> GuestInvoice(string token, CancellationToken cancellationToken)
+    {
+        var (bytes, name) = await workflow.InvoicePdfAsync(null, token, cancellationToken);
         return File(bytes, "application/pdf", name);
     }
 

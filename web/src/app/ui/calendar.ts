@@ -21,6 +21,7 @@ export class Calendar {
 
   readonly cursor = signal(startOfMonth(new Date()));
   readonly note = signal('');
+  readonly slide = signal('');
 
   readonly title = computed(() =>
     this.cursor().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
@@ -53,6 +54,9 @@ export class Calendar {
   shift(months: number): void {
     const cursor = this.cursor();
     this.cursor.set(new Date(cursor.getFullYear(), cursor.getMonth() + months, 1));
+    const next = months > 0 ? 'slide-forward' : 'slide-back';
+    this.slide.set('');
+    requestAnimationFrame(() => this.slide.set(next));
   }
 
   select(cell: Cell): void {

@@ -31,7 +31,15 @@ public record PropertyDto(
     string VenmoHandle,
     string HostSignatureName,
     bool HasHostSignature,
-    string Currency);
+    string Currency,
+    string Slug,
+    string Kind,
+    int SortOrder,
+    string HeroImage,
+    IReadOnlyList<string> Gallery,
+    string RateLabel,
+    string FeeLabel,
+    string InvoicePrefix);
 
 public record PropertyUpdate(
     string Name,
@@ -62,7 +70,7 @@ public record SignatureUpdate(string Name);
 
 public record DayMarkDto(DateOnly Date, DayState State);
 
-public record QuoteRequest(DateOnly CheckIn, DateOnly CheckOut);
+public record QuoteRequest(DateOnly CheckIn, DateOnly CheckOut, string? PropertySlug = null);
 
 public record QuoteDto(
     int Nights,
@@ -84,7 +92,8 @@ public record CreateBookingRequest(
     string GuestName,
     string GuestEmail,
     string? GuestPhone,
-    string? Notes);
+    string? Notes,
+    string? PropertySlug = null);
 
 public record SignRequest(string Type, string? Name, string? ImagePngBase64);
 
@@ -143,12 +152,17 @@ public record BookingSummaryDto(
     DateTimeOffset CreatedAt,
     ContractStatus? ContractStatus,
     InvoicePaymentStatus? InvoiceStatus,
-    decimal AmountPaid);
+    decimal AmountPaid,
+    string PropertyName,
+    string PropertySlug);
 
 public record BookingDetailDto(
     Guid Id,
     string GuestToken,
     string GuestPath,
+    string? GuestUrl,
+    string PropertyName,
+    string PropertySlug,
     string GuestName,
     string GuestEmail,
     string GuestPhone,
