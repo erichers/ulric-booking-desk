@@ -67,6 +67,7 @@ namespace Ulric.BookingDesk.Api.Data.Migrations
 
                     b.Property<string>("GuestToken")
                         .IsRequired()
+                        .HasMaxLength(64)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Guests")
@@ -124,6 +125,7 @@ namespace Ulric.BookingDesk.Api.Data.Migrations
 
                     b.Property<string>("Number")
                         .IsRequired()
+                        .HasMaxLength(32)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -209,6 +211,29 @@ namespace Ulric.BookingDesk.Api.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("AirbnbId")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AirbnbUrl")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AmenitiesJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double>("Baths")
+                        .HasColumnType("REAL");
+
+                    b.Property<int>("Bedrooms")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Beds")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("CancellationPolicy")
                         .IsRequired()
                         .HasColumnType("text");
@@ -235,6 +260,10 @@ namespace Ulric.BookingDesk.Api.Data.Migrations
                     b.Property<string>("ContactPhone")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<string>("ContainsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Currency")
                         .IsRequired()
@@ -313,18 +342,42 @@ namespace Ulric.BookingDesk.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<decimal>("Rating")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ReviewCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SectionsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<decimal>("ServiceFee")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("SleepingJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Slug")
                         .IsRequired()
+                        .HasMaxLength(80)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("SortOrder")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("SubratingsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Tagline")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UnitLabel")
+                        .IsRequired()
+                        .HasMaxLength(40)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("VenmoHandle")

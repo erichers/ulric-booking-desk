@@ -4,7 +4,8 @@ import { DayMark } from '../core/models';
 interface Cell {
   date: string | null;
   day: number;
-  state: 'Open' | 'Held' | 'Booked' | 'Outside';
+  state: 'Open' | 'Held' | 'Booked' | 'Blocked' | 'Outside';
+  heldBy: string;
   label: string;
 }
 
@@ -28,7 +29,7 @@ export class Calendar {
   );
 
   readonly cells = computed(() => {
-    const states = new Map(this.days().map((day) => [day.date, day.state]));
+    const states = new Map(this.days().map((day) => [day.date, day]));
     const cursor = this.cursor();
     const year = cursor.getFullYear();
     const month = cursor.getMonth();
@@ -37,16 +38,19 @@ export class Calendar {
     const count = new Date(year, month + 1, 0).getDate();
     const cells: Cell[] = [];
     for (let i = 0; i < startPad; i++) {
-      cells.push({ date: null, day: 0, state: 'Outside', label: '' });
+      cells.push({ date: null, day: 0, state: 'Outside', heldBy: '', label: '' });
     }
     for (let day = 1; day <= count; day++) {
       const date = iso(year, month, day);
-      const state = states.get(date) ?? 'Open';
+      const mark = states.get(date);
+      const state = mark?.state ?? 'Open';
+      const heldBy = mark?.blockedBy ?? '';
       const long = new Date(year, month, day).toLocaleDateString('en-US', {
         month: 'long',
         day: 'numeric',
       });
-      cells.push({ date, day, state, label: `${long}, ${state.toLowerCase()}` });
+      const label = state === 'Blocked' && heldBy ? `${long}, held by ${heldBy}` : `${long}, ${state.toLowerCase()}`;
+      cells.push({ date, day, state, heldBy, label });
     }
     return cells;
   });
@@ -72,7 +76,7 @@ export class Calendar {
     const checkOut = this.checkOut();
     if (!checkIn || checkOut) {
       if (cell.state !== 'Open') {
-        this.note.set(cell.state === 'Held' ? 'That date is held for a request.' : 'That date is booked.');
+        this.note.set(closedNote(cell));
         return;
       }
       this.note.set('Now choose the checkout morning.');
@@ -82,7 +86,7 @@ export class Calendar {
 
     if (cell.date <= checkIn) {
       if (cell.state !== 'Open') {
-        this.note.set(cell.state === 'Held' ? 'That date is held for a request.' : 'That date is booked.');
+        this.note.set(closedNote(cell));
         return;
       }
       this.note.set('Now choose the checkout morning.');
@@ -136,6 +140,13 @@ export class Calendar {
     }
     return true;
   }
+}
+
+function closedNote(cell: Cell): string {
+  if (cell.state === 'Blocked') {
+    return cell.heldBy ? `Held by ${cell.heldBy}.` : 'Held by another stay.';
+  }
+  return cell.state === 'Held' ? 'That date is held for a request.' : 'That date is booked.';
 }
 
 function startOfMonth(date: Date): Date {

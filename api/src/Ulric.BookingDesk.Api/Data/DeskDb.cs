@@ -18,11 +18,19 @@ public class DeskDb(DbContextOptions<DeskDb> options) : DbContext(options)
         {
             p.HasIndex(x => x.Slug).IsUnique();
             p.Property(x => x.Slug).HasMaxLength(80);
+            p.Property(x => x.UnitLabel).HasMaxLength(40);
+            p.Property(x => x.AirbnbId).HasMaxLength(32);
+            p.Property(x => x.AirbnbUrl).HasMaxLength(200);
             p.Property(x => x.GalleryJson).HasColumnType("text");
             p.Property(x => x.Description).HasColumnType("text");
             p.Property(x => x.HouseRules).HasColumnType("text");
             p.Property(x => x.CancellationPolicy).HasColumnType("text");
             p.Property(x => x.CheckInInstructions).HasColumnType("text");
+            p.Property(x => x.ContainsJson).HasColumnType("text");
+            p.Property(x => x.AmenitiesJson).HasColumnType("text");
+            p.Property(x => x.SectionsJson).HasColumnType("text");
+            p.Property(x => x.SleepingJson).HasColumnType("text");
+            p.Property(x => x.SubratingsJson).HasColumnType("text");
         });
 
         modelBuilder.Entity<Booking>(b =>

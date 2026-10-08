@@ -31,11 +31,15 @@ public sealed class BookingWorkflow(
     public async Task<IReadOnlyList<PropertyDto>> ListPropertiesAsync(CancellationToken cancellationToken)
     {
         var rows = await db.Properties.OrderBy(property => property.SortOrder).ThenBy(property => property.Name).ToListAsync(cancellationToken);
-        return rows.Select(MapProperty).ToList();
+        return rows.Select(row => MapProperty(row, rows)).ToList();
     }
 
-    public async Task<PropertyDto> GetPropertyAsync(CancellationToken cancellationToken, string? slug = null) =>
-        MapProperty(await PropertyAsync(cancellationToken, slug));
+    public async Task<PropertyDto> GetPropertyAsync(CancellationToken cancellationToken, string? slug = null)
+    {
+        var rows = await db.Properties.ToListAsync(cancellationToken);
+        var property = await PropertyAsync(cancellationToken, slug);
+        return MapProperty(property, rows);
+    }
 
     public async Task<byte[]?> HostSignatureAsync(CancellationToken cancellationToken, string? slug = null)
     {
@@ -51,9 +55,9 @@ public sealed class BookingWorkflow(
         property.HostName = update.HostName.Trim();
         property.Tagline = update.Tagline.Trim();
         property.Description = update.Description.Trim();
-        property.LocationLabel = update.LocationLabel.Trim();
-        property.Latitude = update.Latitude;
-        property.Longitude = update.Longitude;
+        property.LocationLabel = ListingCopy.Place;
+        property.Latitude = 0;
+        property.Longitude = 0;
         property.ContactEmail = update.ContactEmail.Trim();
         property.ContactPhone = update.ContactPhone.Trim();
         property.NightlyRate = PricingCalculator.Round(update.NightlyRate);
@@ -71,7 +75,7 @@ public sealed class BookingWorkflow(
         property.VenmoHandle = update.VenmoHandle.Trim();
         property.HostSignatureName = update.HostSignatureName.Trim();
         await db.SaveChangesAsync(cancellationToken);
-        return MapProperty(property);
+        return await MappedAsync(property, cancellationToken);
     }
 
     public async Task<PropertyDto> SaveHostSignatureAsync(string name, CancellationToken cancellationToken, string? slug = null)
@@ -89,7 +93,7 @@ public sealed class BookingWorkflow(
         property.HostSignatureName = trimmed;
         property.HostSignaturePath = relative;
         await db.SaveChangesAsync(cancellationToken);
-        return MapProperty(property);
+        return await MappedAsync(property, cancellationToken);
     }
 
     public async Task<IReadOnlyList<DayMarkDto>> AvailabilityAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken, string? slug = null)
@@ -105,12 +109,19 @@ public sealed class BookingWorkflow(
         }
 
         var property = await PropertyAsync(cancellationToken, slug);
+        var peers = await db.Properties
+            .Select(item => new { item.Id, item.Slug, item.UnitLabel, item.ContainsJson })
+            .ToListAsync(cancellationToken);
+        var contains = LinkMap(peers.Select(item => (item.Slug, item.ContainsJson)));
+        var linked = UnitLinks.LinkedWith(property.Slug, contains);
+        var ids = peers.Where(item => linked.Contains(item.Slug)).Select(item => item.Id).ToList();
+        var labels = peers.ToDictionary(item => item.Id, item => item.UnitLabel);
         var stays = await db.Bookings
-            .Where(booking => booking.PropertyId == property.Id && booking.CheckOut > from && booking.CheckIn <= to)
-            .Select(booking => new { booking.CheckIn, booking.CheckOut, booking.Status })
+            .Where(booking => ids.Contains(booking.PropertyId) && booking.CheckOut > from && booking.CheckIn <= to)
+            .Select(booking => new { booking.PropertyId, booking.CheckIn, booking.CheckOut, booking.Status })
             .ToListAsync(cancellationToken);
 
-        var occupancy = stays.Select(stay => (
+        var occupancy = stays.Select(stay => new LinkedStay(
             stay.CheckIn,
             stay.CheckOut,
             stay.Status switch
@@ -118,12 +129,15 @@ public sealed class BookingWorkflow(
                 BookingStatus.Approved => Occupancy.Booked,
                 BookingStatus.Requested => Occupancy.Held,
                 _ => Occupancy.Open
-            })).ToList();
+            },
+            labels.TryGetValue(stay.PropertyId, out var label) ? label : "another stay",
+            stay.PropertyId == property.Id)).ToList();
 
         var days = new List<DayMarkDto>();
         for (var day = from; day <= to; day = day.AddDays(1))
         {
-            days.Add(new DayMarkDto(day, AvailabilityRules.StateForNight(day, occupancy)));
+            var mark = UnitLinks.MarkNight(day, occupancy);
+            days.Add(new DayMarkDto(day, mark.State, mark.BlockedBy));
         }
 
         return days;
@@ -185,9 +199,10 @@ public sealed class BookingWorkflow(
             throw new DeskException(400, $"This listing asks for at least {property.MinNights} {Unit(property, property.MinNights)}.");
         }
 
-        if (await HasConflictAsync(property.Id, request.CheckIn, request.CheckOut, null, cancellationToken))
+        var conflict = await ConflictLabelAsync(property, request.CheckIn, request.CheckOut, null, cancellationToken);
+        if (conflict is not null)
         {
-            throw new DeskException(409, "Those dates are already held or booked.");
+            throw new DeskException(409, ConflictMessage(conflict));
         }
 
         var today = clock.Today(options.Value.TimeZone);
@@ -271,12 +286,12 @@ public sealed class BookingWorkflow(
             throw new DeskException(409, "Only a request can be approved.");
         }
 
-        if (await HasConflictAsync(booking.PropertyId, booking.CheckIn, booking.CheckOut, booking.Id, cancellationToken, approvedOnly: true))
-        {
-            throw new DeskException(409, "Those dates are already booked.");
-        }
-
         var property = await PropertyForAsync(booking, cancellationToken);
+        var conflict = await ConflictLabelAsync(property, booking.CheckIn, booking.CheckOut, booking.Id, cancellationToken, approvedOnly: true);
+        if (conflict is not null)
+        {
+            throw new DeskException(409, ConflictMessage(conflict));
+        }
         var now = clock.UtcNow;
         var today = clock.Today(options.Value.TimeZone);
         var (depositDue, balanceDue) = DueDates.Compute(today, booking.CheckIn);
@@ -665,20 +680,27 @@ public sealed class BookingWorkflow(
         return (bytes, $"{booking.Invoice.Number}.pdf");
     }
 
-    private async Task<bool> HasConflictAsync(
-        Guid propertyId,
+    private async Task<string?> ConflictLabelAsync(
+        Property property,
         DateOnly checkIn,
         DateOnly checkOut,
         Guid? ignoreId,
         CancellationToken cancellationToken,
         bool approvedOnly = false)
     {
+        var peers = await db.Properties
+            .Select(item => new { item.Id, item.Slug, item.UnitLabel, item.ContainsJson })
+            .ToListAsync(cancellationToken);
+        var contains = LinkMap(peers.Select(item => (item.Slug, item.ContainsJson)));
+        var linked = UnitLinks.LinkedWith(property.Slug, contains);
+        var ids = peers.Where(item => linked.Contains(item.Slug)).Select(item => item.Id).ToList();
+        var labels = peers.ToDictionary(item => item.Id, item => item.UnitLabel);
         var stays = await db.Bookings
-            .Where(booking => booking.PropertyId == propertyId && (ignoreId == null || booking.Id != ignoreId))
-            .Select(booking => new { booking.CheckIn, booking.CheckOut, booking.Status })
+            .Where(booking => ids.Contains(booking.PropertyId) && (ignoreId == null || booking.Id != ignoreId))
+            .Select(booking => new { booking.PropertyId, booking.CheckIn, booking.CheckOut, booking.Status })
             .ToListAsync(cancellationToken);
 
-        var occupancy = stays.Select(stay => (
+        var occupancy = stays.Select(stay => new LinkedStay(
             stay.CheckIn,
             stay.CheckOut,
             stay.Status switch
@@ -686,10 +708,17 @@ public sealed class BookingWorkflow(
                 BookingStatus.Approved => Occupancy.Booked,
                 BookingStatus.Requested when !approvedOnly => Occupancy.Held,
                 _ => Occupancy.Open
-            }));
+            },
+            labels.TryGetValue(stay.PropertyId, out var label) ? label : "another stay",
+            stay.PropertyId == property.Id));
 
-        return AvailabilityRules.HasConflict(checkIn, checkOut, occupancy);
+        return UnitLinks.OverlapLabel(checkIn, checkOut, occupancy, approvedOnly);
     }
+
+    private static string ConflictMessage(string label) =>
+        label.Length == 0
+            ? "Those dates are already held or booked."
+            : $"Those dates are held by the {label}.";
 
     private static StayContract NewContract(Booking booking, Property property, DateTimeOffset createdAt) => new()
     {
@@ -807,41 +836,87 @@ public sealed class BookingWorkflow(
             balanceDue);
     }
 
-    private static PropertyDto MapProperty(Property property) => new(
-        property.Id,
-        property.Name,
-        property.HostName,
-        property.Tagline,
-        property.Description,
-        property.LocationLabel,
-        property.Latitude,
-        property.Longitude,
-        property.ContactEmail,
-        property.ContactPhone,
-        property.NightlyRate,
-        property.CleaningFee,
-        property.ServiceFee,
-        property.DepositPercent,
-        property.MinNights,
-        property.MaxGuests,
-        property.HouseRules,
-        property.CancellationPolicy,
-        property.CheckInTime,
-        property.CheckOutTime,
-        property.CheckInInstructions,
-        property.PaypalHandle,
-        property.VenmoHandle,
-        property.HostSignatureName,
-        !string.IsNullOrWhiteSpace(property.HostSignaturePath),
-        property.Currency,
-        property.Slug,
-        property.Kind,
-        property.SortOrder,
-        RelativeAsset(property.HeroImage),
-        ReadGallery(property.GalleryJson).Select(RelativeAsset).ToList(),
-        string.IsNullOrWhiteSpace(property.RateLabel) ? "night" : property.RateLabel,
-        string.IsNullOrWhiteSpace(property.FeeLabel) ? "Cleaning fee" : property.FeeLabel,
-        property.InvoicePrefix);
+    private async Task<PropertyDto> MappedAsync(Property property, CancellationToken cancellationToken)
+    {
+        var rows = await db.Properties.ToListAsync(cancellationToken);
+        if (rows.All(row => row.Id != property.Id))
+        {
+            rows.Add(property);
+        }
+
+        return MapProperty(property, rows);
+    }
+
+    private static PropertyDto MapProperty(Property property, IReadOnlyList<Property> peers)
+    {
+        var contains = LinkMap(peers.Select(item => (item.Slug, item.ContainsJson)));
+        var linked = UnitLinks.LinkedWith(property.Slug, contains);
+        var blocks = peers
+            .Where(peer => linked.Contains(peer.Slug) && !string.Equals(peer.Slug, property.Slug, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(peer => peer.SortOrder)
+            .Select(peer => string.IsNullOrWhiteSpace(peer.UnitLabel) ? peer.Slug : peer.UnitLabel)
+            .ToList();
+
+        return new PropertyDto(
+            property.Id,
+            property.Name,
+            property.HostName,
+            property.Tagline,
+            property.Description,
+            ListingCopy.Place,
+            property.ContactEmail,
+            property.ContactPhone,
+            property.NightlyRate,
+            property.CleaningFee,
+            property.ServiceFee,
+            property.DepositPercent,
+            property.MinNights,
+            property.MaxGuests,
+            property.HouseRules,
+            property.CancellationPolicy,
+            property.CheckInTime,
+            property.CheckOutTime,
+            property.CheckInInstructions,
+            property.PaypalHandle,
+            property.VenmoHandle,
+            property.HostSignatureName,
+            !string.IsNullOrWhiteSpace(property.HostSignaturePath),
+            property.Currency,
+            property.Slug,
+            property.Kind,
+            property.SortOrder,
+            RelativeAsset(property.HeroImage),
+            ReadPhotos(property.GalleryJson),
+            string.IsNullOrWhiteSpace(property.RateLabel) ? "night" : property.RateLabel,
+            string.IsNullOrWhiteSpace(property.FeeLabel) ? "Cleaning fee" : property.FeeLabel,
+            property.InvoicePrefix,
+            property.UnitLabel,
+            property.AirbnbId,
+            property.AirbnbUrl,
+            property.Rating,
+            property.ReviewCount,
+            property.Bedrooms,
+            property.Beds,
+            property.Baths,
+            ReadStrings(property.ContainsJson),
+            blocks,
+            ReadList<SectionDto>(property.SectionsJson),
+            ReadList<AmenityGroupDto>(property.AmenitiesJson),
+            ReadList<SleepDto>(property.SleepingJson),
+            ReadList<SubratingDto>(property.SubratingsJson),
+            ListingCopy.HostStats);
+    }
+
+    private static Dictionary<string, IReadOnlyList<string>> LinkMap(IEnumerable<(string Slug, string ContainsJson)> rows)
+    {
+        var map = new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var row in rows)
+        {
+            map[row.Slug] = ReadStrings(row.ContainsJson);
+        }
+
+        return map;
+    }
 
     private static void ValidateProperty(PropertyUpdate update)
     {
@@ -863,11 +938,6 @@ public sealed class BookingWorkflow(
         if (update.MinNights < 1 || update.MaxGuests < 1)
         {
             throw new DeskException(400, "Minimum nights and maximum guests start at 1.");
-        }
-
-        if (update.Latitude is < -90 or > 90 || update.Longitude is < -180 or > 180)
-        {
-            throw new DeskException(400, "The map pin is out of range.");
         }
 
         try
@@ -983,8 +1053,8 @@ public sealed class BookingWorkflow(
             depositRemaining,
             [
                 new LineDto($"{booking.Nights} {Unit(property, booking.Nights)}", booking.StaySubtotal),
-                new LineDto(string.IsNullOrWhiteSpace(property.FeeLabel) ? "Cleaning fee" : property.FeeLabel, booking.CleaningFee),
-                new LineDto("Service fee", booking.ServiceFee)
+                ..ZeroFee(string.IsNullOrWhiteSpace(property.FeeLabel) ? "Cleaning fee" : property.FeeLabel, booking.CleaningFee),
+                ..ZeroFee("Service fee", booking.ServiceFee)
             ],
             invoice.Payments
                 .OrderBy(payment => payment.PaidOn)
@@ -999,7 +1069,12 @@ public sealed class BookingWorkflow(
     private static string RelativeAsset(string path) =>
         string.IsNullOrWhiteSpace(path) ? "" : path.TrimStart('/');
 
-    private static IReadOnlyList<string> ReadGallery(string json)
+    private static readonly JsonSerializerOptions JsonRead = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
+    private static IReadOnlyList<string> ReadStrings(string json)
     {
         if (string.IsNullOrWhiteSpace(json))
         {
@@ -1015,6 +1090,64 @@ public sealed class BookingWorkflow(
             return [];
         }
     }
+
+    private static IReadOnlyList<T> ReadList<T>(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return [];
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<T>>(json, JsonRead) ?? [];
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
+    }
+
+    private static IReadOnlyList<PhotoDto> ReadPhotos(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return [];
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            if (document.RootElement.ValueKind != JsonValueKind.Array)
+            {
+                return [];
+            }
+
+            var photos = new List<PhotoDto>();
+            foreach (var item in document.RootElement.EnumerateArray())
+            {
+                if (item.ValueKind == JsonValueKind.String)
+                {
+                    photos.Add(new PhotoDto(RelativeAsset(item.GetString() ?? ""), "", ""));
+                    continue;
+                }
+
+                var src = item.TryGetProperty("src", out var srcValue) ? srcValue.GetString() ?? "" : "";
+                var caption = item.TryGetProperty("caption", out var captionValue) ? captionValue.GetString() ?? "" : "";
+                var room = item.TryGetProperty("room", out var roomValue) ? roomValue.GetString() ?? "" : "";
+                photos.Add(new PhotoDto(RelativeAsset(src), caption, room));
+            }
+
+            return photos;
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
+    }
+
+    private static IEnumerable<LineDto> ZeroFee(string label, decimal amount) =>
+        amount == 0 ? [] : [new LineDto(label, amount)];
 
     private static string Unit(Property property, int count)
     {

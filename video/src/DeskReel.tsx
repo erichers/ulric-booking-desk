@@ -23,7 +23,7 @@ export const DeskReel = () => {
           </div>
           <h1 style={{ fontWeight: 500, fontSize: 92, margin: '12px 0 16px' }}>Booking Desk</h1>
           <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 28, color: soft, maxWidth: 760 }}>
-            North Room rents by the night. Mara Ellison books portrait sessions.
+            Five stays in Eugene, OR, near Hayward Field.
           </p>
         </AbsoluteFill>
       </Sequence>
@@ -43,6 +43,7 @@ const House = ({ frame }: { frame: number }) => {
     { name: '3-bed', note: 'Contains the 2-bed', hot: frame > 70 && frame < 150 },
     { name: '2-bed', note: 'Blocks the 3-bed and the 4-bed', hot: frame > 40 && frame < 150 },
     { name: 'Studio', note: 'Blocks the 4-bed', hot: frame >= 150 },
+    { name: 'Cottage', note: 'Links to nothing', hot: false },
   ];
   return (
     <AbsoluteFill style={{ padding: 88, opacity: fade(frame, 6) }}>

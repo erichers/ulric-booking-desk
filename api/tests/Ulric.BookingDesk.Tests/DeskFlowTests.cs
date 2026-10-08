@@ -71,26 +71,31 @@ public class DeskFlowTests : IClassFixture<DeskApiFactory>
     public DeskFlowTests(DeskApiFactory factory) => _client = factory.CreateClient();
 
     [Fact]
-    public async Task Seed_opens_on_north_room_with_the_demo_handle()
+    public async Task Seed_opens_on_the_studio_near_Hayward_Field()
     {
         var property = await _client.GetFromJsonAsync<JsonElement>("/api/property");
-        Assert.Equal("North Room", property.GetProperty("name").GetString());
-        Assert.Equal("north-room", property.GetProperty("slug").GetString());
+        Assert.Equal("Modern Studio Steps to Hayward Field + Deck", property.GetProperty("name").GetString());
+        Assert.Equal("studio", property.GetProperty("slug").GetString());
+        Assert.Equal("Eugene, OR, near Hayward Field", property.GetProperty("locationLabel").GetString());
+        Assert.Equal("https://www.airbnb.com/rooms/29825358", property.GetProperty("airbnbUrl").GetString());
+        Assert.Equal("Superhost, 4.92 across 813 reviews", property.GetProperty("hostStats").GetString());
         Assert.Equal("ulric-demo", property.GetProperty("paypalHandle").GetString());
         Assert.Equal("ulric-demo", property.GetProperty("venmoHandle").GetString());
+        Assert.False(property.TryGetProperty("latitude", out _));
         Assert.True(property.GetProperty("hasHostSignature").GetBoolean());
+        Assert.Contains(property.GetProperty("blocks").EnumerateArray(), item => item.GetString() == "4-bed");
     }
 
     [Fact]
-    public async Task Quote_uses_the_seeded_rate_card()
+    public async Task Quote_uses_the_studio_from_rate()
     {
         var checkIn = new DateOnly(2026, 11, 2);
         var response = await _client.PostAsJsonAsync("/api/quotes", new { checkIn, checkOut = checkIn.AddDays(3) });
         response.EnsureSuccessStatusCode();
         var quote = await response.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(3, quote.GetProperty("nights").GetInt32());
-        Assert.Equal(895m, quote.GetProperty("total").GetDecimal());
-        Assert.Equal(268.50m, quote.GetProperty("depositAmount").GetDecimal());
+        Assert.Equal(333m, quote.GetProperty("total").GetDecimal());
+        Assert.Equal(99.90m, quote.GetProperty("depositAmount").GetDecimal());
     }
 
     [Fact]
@@ -171,11 +176,14 @@ public class DeskFlowTests : IClassFixture<DeskApiFactory>
     }
 
     [Fact]
-    public async Task Catalog_keeps_studio_and_photographer_calendars_apart()
+    public async Task Linked_calendars_block_the_house_and_leave_the_cottage_open()
     {
         var list = await _client.GetFromJsonAsync<JsonElement>("/api/properties");
-        Assert.Equal(2, list.GetArrayLength());
-        Assert.Contains(list.EnumerateArray(), item => item.GetProperty("slug").GetString() == "mara-ellison");
+        Assert.Equal(5, list.GetArrayLength());
+        var slugs = list.EnumerateArray().Select(item => item.GetProperty("slug").GetString()).ToArray();
+        Assert.DoesNotContain("north-room", slugs);
+        Assert.DoesNotContain("mara-ellison", slugs);
+        Assert.Contains("cottage", slugs);
 
         var checkIn = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(120);
         var studio = await PostJson("/api/bookings", new
@@ -184,26 +192,85 @@ public class DeskFlowTests : IClassFixture<DeskApiFactory>
             checkOut = checkIn.AddDays(2),
             guests = 2,
             guestName = "Studio Guest",
-            guestEmail = "studio@example.com",
+            guestEmail = "studio-guest@example.com",
             guestPhone = "",
             notes = "",
-            propertySlug = "north-room"
+            propertySlug = "studio"
         });
         Assert.Equal("Requested", studio.GetProperty("status").GetString());
 
-        var sameDates = await PostJson("/api/bookings", new
+        var cottage = await PostJson("/api/bookings", new
         {
             checkIn,
             checkOut = checkIn.AddDays(2),
-            guests = 1,
-            guestName = "Portrait Guest",
-            guestEmail = "portrait@example.com",
+            guests = 2,
+            guestName = "Cottage Guest",
+            guestEmail = "cottage-guest@example.com",
             guestPhone = "",
             notes = "",
-            propertySlug = "mara-ellison"
+            propertySlug = "cottage"
         });
-        Assert.Equal("Requested", sameDates.GetProperty("status").GetString());
-        Assert.Equal("mara-ellison", sameDates.GetProperty("propertySlug").GetString());
+        Assert.Equal("Requested", cottage.GetProperty("status").GetString());
+
+        var fourBed = await _client.PostAsJsonAsync("/api/bookings", new
+        {
+            checkIn,
+            checkOut = checkIn.AddDays(2),
+            guests = 2,
+            guestName = "House Guest",
+            guestEmail = "house-guest@example.com",
+            guestPhone = "",
+            notes = "",
+            propertySlug = "four-bed"
+        });
+        Assert.Equal(HttpStatusCode.Conflict, fourBed.StatusCode);
+        var fourText = await fourBed.Content.ReadAsStringAsync();
+        Assert.Contains("Studio", fourText);
+
+        var twoBed = await PostJson("/api/bookings", new
+        {
+            checkIn = checkIn.AddDays(10),
+            checkOut = checkIn.AddDays(12),
+            guests = 2,
+            guestName = "Suite Guest",
+            guestEmail = "suite-guest@example.com",
+            guestPhone = "",
+            notes = "",
+            propertySlug = "two-bed"
+        });
+        Assert.Equal("Requested", twoBed.GetProperty("status").GetString());
+
+        var threeBed = await _client.PostAsJsonAsync("/api/bookings", new
+        {
+            checkIn = checkIn.AddDays(10),
+            checkOut = checkIn.AddDays(12),
+            guests = 2,
+            guestName = "Vintage Guest",
+            guestEmail = "vintage-guest@example.com",
+            guestPhone = "",
+            notes = "",
+            propertySlug = "three-bed"
+        });
+        Assert.Equal(HttpStatusCode.Conflict, threeBed.StatusCode);
+
+        var studioBesideTwo = await PostJson("/api/bookings", new
+        {
+            checkIn = checkIn.AddDays(10),
+            checkOut = checkIn.AddDays(12),
+            guests = 1,
+            guestName = "Deck Guest",
+            guestEmail = "deck-guest@example.com",
+            guestPhone = "",
+            notes = "",
+            propertySlug = "studio"
+        });
+        Assert.Equal("Requested", studioBesideTwo.GetProperty("status").GetString());
+
+        var marks = await _client.GetFromJsonAsync<JsonElement>(
+            $"/api/availability?from={checkIn:yyyy-MM-dd}&to={checkIn.AddDays(1):yyyy-MM-dd}&slug=four-bed");
+        var blocked = marks.EnumerateArray().First(item => item.GetProperty("date").GetString() == checkIn.ToString("yyyy-MM-dd"));
+        Assert.Equal("Blocked", blocked.GetProperty("state").GetString());
+        Assert.Equal("Studio", blocked.GetProperty("blockedBy").GetString());
     }
 
     private async Task<JsonElement> PostJson(string url, object body)

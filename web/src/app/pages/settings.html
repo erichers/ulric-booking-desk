@@ -17,7 +17,7 @@
       <label>Listing name <input name="name" [(ngModel)]="draft.name" required /></label>
       <label>Host name <input name="hostName" [(ngModel)]="draft.hostName" required /></label>
       <label>Tagline <input name="tagline" [(ngModel)]="draft.tagline" /></label>
-      <label>Location <input name="locationLabel" [(ngModel)]="draft.locationLabel" /></label>
+      <p class="quiet">Shown location: {{ draft.locationLabel }}</p>
       <label>Email <input name="contactEmail" [(ngModel)]="draft.contactEmail" /></label>
       <label>Phone <input name="contactPhone" [(ngModel)]="draft.contactPhone" /></label>
       <label>Rate <input type="number" name="nightlyRate" min="0" step="0.01" [(ngModel)]="draft.nightlyRate" /></label>
@@ -30,8 +30,6 @@
       <label>Checkout time <input name="checkOutTime" [(ngModel)]="draft.checkOutTime" /></label>
       <label>PayPal handle <input name="paypalHandle" [(ngModel)]="draft.paypalHandle" /></label>
       <label>Venmo handle <input name="venmoHandle" [(ngModel)]="draft.venmoHandle" /></label>
-      <label>Latitude <input type="number" name="latitude" step="0.0001" [(ngModel)]="draft.latitude" /></label>
-      <label>Longitude <input type="number" name="longitude" step="0.0001" [(ngModel)]="draft.longitude" /></label>
     </div>
     <label>Description <textarea name="description" rows="4" [(ngModel)]="draft.description"></textarea></label>
     <label>House rules <textarea name="houseRules" rows="4" [(ngModel)]="draft.houseRules"></textarea></label>

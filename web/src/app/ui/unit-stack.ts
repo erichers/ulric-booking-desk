@@ -1,6 +1,6 @@
-import { Component, ElementRef, OnDestroy, afterNextRender, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, afterNextRender, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { Theme } from '../core/theme';
-import { blockLine, blockedBy, houseUnits } from '../core/nesting';
+import { StayUnit, blockLine, blockedBy, houseUnits } from '../core/nesting';
 import { prefersReducedMotion } from '../core/motion';
 import { InView } from './in-view';
 
@@ -12,20 +12,22 @@ type Palette = { paper: string; ink: string; terracotta: string; raised: string;
   template: `
     <div class="stack" appInView>
       <div class="stage" #stage [attr.data-mode]="mode()">
-        <svg class="plan" viewBox="0 0 640 420" role="img" [attr.aria-label]="line()">
-          <rect class="vol shell" [class.hot]="hot('four')" x="24" y="28" width="592" height="364" pathLength="1" />
-          <text class="plan-label" x="40" y="58">4-bed</text>
-          <rect class="vol" [class.hot]="hot('three')" x="44" y="84" width="348" height="284" pathLength="1" />
-          <text class="plan-label" x="60" y="114">3-bed</text>
-          <rect class="vol solid" [class.hot]="hot('two')" x="68" y="176" width="196" height="164" pathLength="1" />
-          <text class="plan-label" x="84" y="206">2-bed</text>
-          <rect class="vol solid" [class.hot]="hot('studio')" x="424" y="84" width="168" height="164" pathLength="1" />
-          <text class="plan-label" x="440" y="114">Studio</text>
+        <svg class="plan" viewBox="0 0 780 420" role="img" [attr.aria-label]="line()">
+          <rect class="vol shell" [class.hot]="hot('four-bed')" x="16" y="28" width="500" height="364" pathLength="1" />
+          <text class="plan-label" x="32" y="58">4-bed</text>
+          <rect class="vol" [class.hot]="hot('three-bed')" x="32" y="78" width="300" height="290" pathLength="1" />
+          <text class="plan-label" x="48" y="108">3-bed</text>
+          <rect class="vol solid" [class.hot]="hot('two-bed')" x="48" y="168" width="170" height="168" pathLength="1" />
+          <text class="plan-label" x="64" y="198">2-bed</text>
+          <rect class="vol solid" [class.hot]="hot('studio')" x="348" y="78" width="148" height="160" pathLength="1" />
+          <text class="plan-label" x="364" y="108">Studio</text>
+          <rect class="vol solid" [class.hot]="hot('cottage')" x="548" y="120" width="200" height="180" pathLength="1" />
+          <text class="plan-label" x="564" y="150">Cottage</text>
         </svg>
         <canvas #gl aria-hidden="true"></canvas>
       </div>
       <div class="toggle" role="group" aria-label="Preview a booking">
-        @for (unit of units; track unit.id) {
+        @for (unit of units(); track unit.id) {
           <button type="button" [class.active]="picked() === unit.id" (click)="pick(unit.id)">{{ unit.name }}</button>
         }
         <button type="button" class="text-btn" (click)="pick(null)">Clear</button>
@@ -48,14 +50,14 @@ export class UnitStack implements OnDestroy {
     line: '#e4e0d6',
   };
 
-  readonly units = houseUnits;
+  readonly units = input<readonly StayUnit[]>(houseUnits);
   readonly mode = signal<'svg' | 'webgl'>('svg');
   readonly picked = signal<string | null>(null);
   readonly blocked = computed(() => {
     const id = this.picked();
-    return id ? blockedBy(id) : [];
+    return id ? blockedBy(id, this.units()) : [];
   });
-  readonly line = computed(() => blockLine(this.picked()));
+  readonly line = computed(() => blockLine(this.picked(), this.units()));
 
   constructor() {
     effect(() => {
@@ -130,8 +132,8 @@ export class UnitStack implements OnDestroy {
 
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 40);
-      camera.position.set(5.6, 3.8, 6.8);
-      camera.lookAt(0, -0.25, 0);
+      camera.position.set(7.4, 4.6, 9.2);
+      camera.lookAt(0.35, -0.3, 0);
 
       scene.add(new THREE.HemisphereLight(0xfff6ea, 0x2a2622, 0.9));
       const key = new THREE.DirectionalLight(0xfff1e4, 2.5);
@@ -140,17 +142,17 @@ export class UnitStack implements OnDestroy {
       key.shadow.mapSize.set(1024, 1024);
       key.shadow.camera.near = 0.5;
       key.shadow.camera.far = 24;
-      key.shadow.camera.left = -6;
-      key.shadow.camera.right = 6;
-      key.shadow.camera.top = 6;
-      key.shadow.camera.bottom = -6;
+      key.shadow.camera.left = -8;
+      key.shadow.camera.right = 8;
+      key.shadow.camera.top = 8;
+      key.shadow.camera.bottom = -8;
       scene.add(key);
       const rim = new THREE.DirectionalLight(this.colors.terracotta, 0.45);
       rim.position.set(-5, 2.5, -3);
       scene.add(rim);
 
       const ground = new THREE.Mesh(
-        new THREE.CircleGeometry(6.5, 48),
+        new THREE.CircleGeometry(8.2, 48),
         new THREE.MeshStandardMaterial({ color: this.colors.paper, roughness: 1 }),
       );
       ground.rotation.x = -Math.PI / 2;
@@ -163,10 +165,11 @@ export class UnitStack implements OnDestroy {
 
       const black = new THREE.Color('#000000');
       const volumes = [
-        this.volume(THREE, 'four', 4.6, 2.15, 3.3, 0, -0.225, 0, true),
-        this.volume(THREE, 'three', 2.7, 1.7, 2.5, -0.75, -0.45, 0, true),
-        this.volume(THREE, 'two', 1.45, 0.9, 1.4, -1.05, -0.85, 0.08, false),
-        this.volume(THREE, 'studio', 1.2, 1.05, 1.25, 1.35, -0.775, 0.12, false),
+        this.volume(THREE, 'four-bed', 4.6, 2.15, 3.3, -0.85, -0.225, 0, true),
+        this.volume(THREE, 'three-bed', 2.7, 1.7, 2.5, -1.6, -0.45, 0, true),
+        this.volume(THREE, 'two-bed', 1.45, 0.9, 1.4, -1.9, -0.85, 0.08, false),
+        this.volume(THREE, 'studio', 1.2, 1.05, 1.25, 0.5, -0.775, 0.12, false),
+        this.volume(THREE, 'cottage', 1.35, 1.05, 1.3, 3.15, -0.8, 0.1, false),
       ];
       for (const volume of volumes) {
         group.add(volume.mesh);

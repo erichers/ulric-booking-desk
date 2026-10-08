@@ -1,8 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { Api } from '../core/api';
 import { money } from '../core/format';
+import { houseUnits, StayUnit } from '../core/nesting';
 import { Property } from '../core/models';
 import { FlowDiagram } from '../ui/flow-diagram';
 import { UnitStack } from '../ui/unit-stack';
@@ -18,6 +19,18 @@ export class Home {
   readonly loading = signal(true);
   readonly error = signal('');
   readonly listings = signal<Property[]>([]);
+  readonly stackUnits = computed((): readonly StayUnit[] => {
+    const rows = this.listings();
+    if (!rows.length) {
+      return houseUnits;
+    }
+    return rows.map((row) => ({
+      id: row.slug,
+      name: row.unitLabel,
+      beds: row.bedrooms,
+      contains: row.contains,
+    }));
+  });
 
   constructor() {
     void this.load();
@@ -34,7 +47,4 @@ export class Home {
     }
   }
 
-  unit(listing: Property): string {
-    return listing.rateLabel === 'session' ? 'session' : 'night';
-  }
 }

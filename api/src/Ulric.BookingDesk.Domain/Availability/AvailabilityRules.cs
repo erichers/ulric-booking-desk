@@ -4,7 +4,8 @@ public enum DayState
 {
     Open,
     Held,
-    Booked
+    Booked,
+    Blocked
 }
 
 public enum Occupancy

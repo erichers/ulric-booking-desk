@@ -1,3 +1,29 @@
+export interface Photo {
+  src: string;
+  caption: string;
+  room: string;
+}
+
+export interface ListingSection {
+  title: string;
+  text: string;
+}
+
+export interface AmenityGroup {
+  group: string;
+  items: string[];
+}
+
+export interface SleepingSpot {
+  room: string;
+  beds: string;
+}
+
+export interface Subrating {
+  name: string;
+  score: string;
+}
+
 export interface Property {
   id: string;
   name: string;
@@ -5,8 +31,6 @@ export interface Property {
   tagline: string;
   description: string;
   locationLabel: string;
-  latitude: number;
-  longitude: number;
   contactEmail: string;
   contactPhone: string;
   nightlyRate: number;
@@ -29,15 +53,31 @@ export interface Property {
   kind: string;
   sortOrder: number;
   heroImage: string;
-  gallery: string[];
+  gallery: Photo[];
   rateLabel: string;
   feeLabel: string;
   invoicePrefix: string;
+  unitLabel: string;
+  airbnbId: string;
+  airbnbUrl: string;
+  rating: number;
+  reviewCount: number;
+  bedrooms: number;
+  beds: number;
+  baths: number;
+  contains: string[];
+  blocks: string[];
+  sections: ListingSection[];
+  amenities: AmenityGroup[];
+  sleeping: SleepingSpot[];
+  subratings: Subrating[];
+  hostStats: string;
 }
 
 export interface DayMark {
   date: string;
-  state: 'Open' | 'Held' | 'Booked';
+  state: 'Open' | 'Held' | 'Booked' | 'Blocked';
+  blockedBy: string | null;
 }
 
 export interface Quote {

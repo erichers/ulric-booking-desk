@@ -66,7 +66,7 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
     var workflow = scope.ServiceProvider.GetRequiredService<BookingWorkflow>();
     var clock = scope.ServiceProvider.GetRequiredService<IDeskClock>();
-    await Seeder.SeedAsync(workflow, db, clock, CancellationToken.None);
+    await Seeder.SeedAsync(workflow, db, clock, app.Environment.ContentRootPath, CancellationToken.None);
 }
 
 app.UseExceptionHandler(handler =>

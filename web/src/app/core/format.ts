@@ -37,13 +37,12 @@ export function label(value: string | null | undefined): string {
   return value.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
 }
 
-export function stayUnit(slug: string | null | undefined, count: number): string {
-  const one = slug === 'mara-ellison' ? 'session' : 'night';
-  return count === 1 ? one : `${one}s`;
+export function stayUnit(_slug: string | null | undefined, count: number): string {
+  return count === 1 ? 'night' : 'nights';
 }
 
-export function feeName(slug: string | null | undefined): string {
-  return slug === 'mara-ellison' ? 'Styling' : 'Reset fee';
+export function feeName(_slug: string | null | undefined): string {
+  return 'Cleaning';
 }
 
 export function guestCount(count: number): string {

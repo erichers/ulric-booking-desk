@@ -1,4 +1,6 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Ulric.BookingDesk.Api.Models;
 using Ulric.BookingDesk.Api.Services;
 using Ulric.BookingDesk.Domain.Pricing;
 using Ulric.BookingDesk.Domain.Scheduling;
@@ -7,132 +9,171 @@ namespace Ulric.BookingDesk.Api.Data;
 
 public static class Seeder
 {
-    public static async Task SeedAsync(BookingWorkflow workflow, DeskDb db, IDeskClock clock, CancellationToken cancellationToken)
+    private static readonly string[] ExpectedSlugs = ["studio", "two-bed", "three-bed", "four-bed", "cottage"];
+
+    private static readonly JsonSerializerOptions ReadJson = new()
     {
-        if (await db.Properties.AnyAsync(cancellationToken))
+        PropertyNameCaseInsensitive = true
+    };
+
+    private static readonly JsonSerializerOptions WriteJson = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    public static async Task SeedAsync(BookingWorkflow workflow, DeskDb db, IDeskClock clock, string contentRoot, CancellationToken cancellationToken)
+    {
+        var slugs = await db.Properties.Select(property => property.Slug).ToListAsync(cancellationToken);
+        if (slugs.Count == ExpectedSlugs.Length && ExpectedSlugs.All(slugs.Contains))
         {
             return;
         }
 
-        var studio = Studio();
-        var photographer = Photographer();
-        db.Properties.AddRange(studio, photographer);
+        if (slugs.Count > 0)
+        {
+            await db.Payments.ExecuteDeleteAsync(cancellationToken);
+            await db.Invoices.ExecuteDeleteAsync(cancellationToken);
+            await db.Reminders.ExecuteDeleteAsync(cancellationToken);
+            await db.Contracts.ExecuteDeleteAsync(cancellationToken);
+            await db.Outbox.ExecuteDeleteAsync(cancellationToken);
+            await db.Bookings.ExecuteDeleteAsync(cancellationToken);
+            await db.Properties.ExecuteDeleteAsync(cancellationToken);
+        }
+
+        var properties = LoadListings(contentRoot);
+        db.Properties.AddRange(properties);
         await db.SaveChangesAsync(cancellationToken);
-        await workflow.SaveHostSignatureAsync(studio.HostSignatureName, cancellationToken, studio.Slug);
-        await workflow.SaveHostSignatureAsync(photographer.HostSignatureName, cancellationToken, photographer.Slug);
+        foreach (var property in properties)
+        {
+            await workflow.SaveHostSignatureAsync(property.HostSignatureName, cancellationToken, property.Slug);
+        }
 
         var today = clock.Today("America/Los_Angeles");
         var now = clock.UtcNow;
-        await SeedStays(workflow, db, studio, today, now, StudioStays(), cancellationToken);
-        await SeedStays(workflow, db, photographer, today, now, PhotographerStays(), cancellationToken);
+        var bySlug = properties.ToDictionary(property => property.Slug);
+        await SeedStays(workflow, db, bySlug["studio"], today, now, StudioStays(), cancellationToken);
+        await SeedStays(workflow, db, bySlug["two-bed"], today, now, TwoBedStays(), cancellationToken);
+        await SeedStays(workflow, db, bySlug["three-bed"], today, now, ThreeBedStays(), cancellationToken);
+        await SeedStays(workflow, db, bySlug["four-bed"], today, now, FourBedStays(), cancellationToken);
+        await SeedStays(workflow, db, bySlug["cottage"], today, now, CottageStays(), cancellationToken);
     }
 
-    private static Property Studio() => new()
+    private static List<Property> LoadListings(string contentRoot)
+    {
+        var directory = FindListings(contentRoot);
+        return Directory.EnumerateFiles(directory, "*.json")
+            .Select(path => JsonSerializer.Deserialize<ListingFile>(File.ReadAllText(path), ReadJson)
+                ?? throw new InvalidOperationException($"Could not read {path}."))
+            .OrderBy(file => file.SortOrder)
+            .Select(ToProperty)
+            .ToList();
+    }
+
+    private static string FindListings(string contentRoot)
+    {
+        foreach (var start in new[] { contentRoot, AppContext.BaseDirectory, Directory.GetCurrentDirectory() })
+        {
+            var dir = new DirectoryInfo(start);
+            while (dir is not null)
+            {
+                var candidate = Path.Combine(dir.FullName, "Data", "listings");
+                if (Directory.Exists(candidate) && Directory.EnumerateFiles(candidate, "*.json").Any())
+                {
+                    return candidate;
+                }
+
+                dir = dir.Parent;
+            }
+        }
+
+        throw new InvalidOperationException("Listing files were not found.");
+    }
+
+    private static Property ToProperty(ListingFile file) => new()
     {
         Id = Guid.NewGuid(),
-        Slug = "north-room",
-        Kind = "Rental",
-        SortOrder = 0,
-        Name = "North Room",
-        HostName = "Lena Cho",
-        Tagline = "A daylight studio for rent, by the night.",
-        Description = "North Room is a 700 square foot daylight studio in inner southeast Portland. The north wall is a painted cove, the floor is sealed maple, and a clothing rack and two C-stands stay with the room. Lena Cho hands over the key code after the deposit clears. This is a fictional studio used to show the desk.",
-        LocationLabel = "Inner southeast Portland",
-        Latitude = 45.5152,
-        Longitude = -122.6534,
-        ContactEmail = "lena@northroom.example",
-        ContactPhone = "(503) 555-0148",
-        NightlyRate = 245m,
-        CleaningFee = 125m,
-        ServiceFee = 35m,
-        DepositPercent = 30m,
-        MinNights = 2,
-        MaxGuests = 6,
+        Slug = file.Slug,
+        Kind = "Entire home",
+        SortOrder = file.SortOrder,
+        Name = file.Name,
+        HostName = "Eric",
+        Tagline = file.Tagline,
+        Description = file.Summary,
+        LocationLabel = ListingCopy.Place,
+        Latitude = 0,
+        Longitude = 0,
+        ContactEmail = "host@example.com",
+        ContactPhone = "",
+        NightlyRate = file.NightlyRate,
+        CleaningFee = 0,
+        ServiceFee = 0,
+        DepositPercent = 30,
+        MinNights = 1,
+        MaxGuests = file.MaxGuests,
         RateLabel = "night",
-        FeeLabel = "Reset fee",
-        InvoicePrefix = "NR",
-        HeroImage = "photos/north-room-hero.jpg",
-        GalleryJson = "[\"photos/north-room-hero.jpg\",\"photos/north-room-gear.jpg\",\"photos/north-room-set.jpg\"]",
-        HouseRules = "Quiet hours run from 9pm to 8am. No parties, no smoking, and no fog machines. Tape stays off the cove. Two people may crew a shoot. Strike the set and take trash to the alley bin before you lock up.",
-        CancellationPolicy = "Cancel 14 days before the first night for a full refund of what you have paid. Inside 14 days the deposit is kept. If you cancel before the balance due date, the balance is not collected.",
-        CheckInTime = "10:00",
-        CheckOutTime = "18:00",
-        CheckInInstructions = "The lockbox is on the alley door, under the small north-room plaque. The code arrives in the check-in note. Load in through the alley, not the coffee shop next door. Wifi name is North-Room-Guest.",
+        FeeLabel = "Cleaning",
+        InvoicePrefix = file.InvoicePrefix,
+        HeroImage = file.Photos.FirstOrDefault()?.Src ?? "",
+        GalleryJson = JsonSerializer.Serialize(file.Photos, WriteJson),
+        HouseRules = file.HouseRules,
+        CancellationPolicy = "Free cancellation. The full policy is on the Airbnb listing.",
+        CheckInTime = file.CheckInTime,
+        CheckOutTime = file.CheckOutTime,
+        CheckInInstructions = file.CheckInInstructions,
         PaypalHandle = "ulric-demo",
         VenmoHandle = "ulric-demo",
-        HostSignatureName = "Lena Cho",
-        Currency = "USD"
+        HostSignatureName = "Eric",
+        Currency = "USD",
+        UnitLabel = file.UnitLabel,
+        AirbnbId = file.AirbnbId,
+        AirbnbUrl = file.AirbnbUrl,
+        Rating = file.Rating,
+        ReviewCount = file.ReviewCount,
+        Bedrooms = file.Bedrooms,
+        Beds = file.Beds,
+        Baths = file.Baths,
+        ContainsJson = JsonSerializer.Serialize(file.Contains),
+        AmenitiesJson = Raw(file.Amenities),
+        SectionsJson = Raw(file.Sections),
+        SleepingJson = Raw(file.Sleeping),
+        SubratingsJson = Raw(file.Subratings)
     };
 
-    private static Property Photographer() => new()
-    {
-        Id = Guid.NewGuid(),
-        Slug = "mara-ellison",
-        Kind = "Photographer",
-        SortOrder = 1,
-        Name = "Mara Ellison",
-        HostName = "Mara Ellison",
-        Tagline = "Portraits and small editorial sessions.",
-        Description = "Mara Ellison photographs portraits and small editorial stories from a loft on Division. A session is a booked day with her, the north window, and a simple lighting kit. This is a fictional photographer used to show the desk. She does not share a calendar with the studio rental next door.",
-        LocationLabel = "Division, Portland",
-        Latitude = 45.5046,
-        Longitude = -122.6288,
-        ContactEmail = "mara@ellison.example",
-        ContactPhone = "(503) 555-0172",
-        NightlyRate = 480m,
-        CleaningFee = 0m,
-        ServiceFee = 40m,
-        DepositPercent = 40m,
-        MinNights = 1,
-        MaxGuests = 4,
-        RateLabel = "session",
-        FeeLabel = "Styling",
-        InvoicePrefix = "ME",
-        HeroImage = "photos/mara-ellison-hero.jpg",
-        GalleryJson = "[\"photos/mara-ellison-hero.jpg\",\"photos/mara-ellison-working.jpg\",\"photos/mara-ellison-portrait.jpg\",\"photos/mara-ellison-camera.jpg\"]",
-        HouseRules = "Sessions start on time. One wardrobe change is included. Extra looks need a note in the request. No drones in the loft. Please send a short shot list the day before.",
-        CancellationPolicy = "Cancel 7 days before the session for a full refund of what you have paid. Inside 7 days the deposit is kept. Weather moves for outdoor add-ons are rescheduled, not refunded.",
-        CheckInTime = "09:30",
-        CheckOutTime = "16:00",
-        CheckInInstructions = "Buzz Ellison on the Division loft panel. The session starts in the north window. Street parking is easiest on the numbered side streets. Mara will text the call time the evening before.",
-        PaypalHandle = "ulric-demo",
-        VenmoHandle = "ulric-demo",
-        HostSignatureName = "Mara Ellison",
-        Currency = "USD"
-    };
+    private static string Raw(JsonElement element) =>
+        element.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null ? "[]" : element.GetRawText();
 
     private static SeedStay[] StudioStays() =>
     [
-        Stay("Helen Cho", "helen@example.com", "503-555-0110", 2, -62, -58, BookingStatus.Approved, true, PayKind.Full, "PayPal", 70, "Product stills for a ceramic line."),
-        Stay("Marco Diaz", "marco@example.com", "503-555-0118", 4, -48, -44, BookingStatus.Approved, true, PayKind.Full, "Venmo", 52, "Lookbook, two racks."),
-        Stay("Priya Shah", "priya@example.com", "503-555-0142", 2, -34, -30, BookingStatus.Approved, true, PayKind.Full, "PayPal", 40, "Arriving with a stylist."),
-        Stay("Jonah Hale", "jonah@example.com", "503-555-0177", 3, -20, -16, BookingStatus.Approved, true, PayKind.Full, "Venmo", 24, ""),
-        Stay("Camille Ortiz", "camille@example.com", "503-555-0194", 2, -4, 2, BookingStatus.Approved, true, PayKind.Deposit, "PayPal", 12, "In the room this week."),
-        Stay("Amira Solano", "amira@example.com", "503-555-0126", 3, 8, 12, BookingStatus.Approved, false, PayKind.None, "PayPal", 10, "Waiting on the contract."),
-        Stay("June Park", "june@example.com", "503-555-0160", 2, 16, 19, BookingStatus.Approved, true, PayKind.Full, "Venmo", 6, "Paid ahead."),
-        Stay("Theo Nguyen", "theo@example.com", "503-555-0188", 3, 22, 26, BookingStatus.Approved, true, PayKind.Deposit, "PayPal", 4, "Deposit sent."),
-        Stay("Imani Brooks", "imani@example.com", "503-555-0133", 2, 40, 44, BookingStatus.Approved, false, PayKind.None, "PayPal", 1, "Just approved."),
-        Stay("Wes Callahan", "wes@example.com", "503-555-0155", 2, 28, 32, BookingStatus.Requested, false, PayKind.None, "PayPal", 1, "Could we load in at 9?"),
-        Stay("Noah Okonkwo", "noah@example.com", "503-555-0104", 3, 48, 52, BookingStatus.Requested, false, PayKind.None, "PayPal", 2, "Need the cove and one softbox."),
-        Stay("Lila Berg", "lila@example.com", "503-555-0190", 2, 17, 20, BookingStatus.Declined, false, PayKind.None, "PayPal", 8, "Those nights were already held."),
-        Stay("Sera Quinn", "sera@example.com", "", 2, 55, 58, BookingStatus.Cancelled, false, PayKind.None, "PayPal", 3, "Client moved the shoot.")
+        Stay("Ada", "ada@example.com", 2, 1, 3, BookingStatus.Approved, true, PayKind.Deposit, "PayPal", 6, "Arriving after 4."),
+        Stay("Ellis", "ellis@example.com", 1, 28, 31, BookingStatus.Approved, false, PayKind.None, "PayPal", 2, "Contract still open.")
     ];
 
-    private static SeedStay[] PhotographerStays() =>
+    private static SeedStay[] TwoBedStays() =>
     [
-        Stay("Adele Marin", "adele@example.com", "503-555-0108", 1, -70, -69, BookingStatus.Approved, true, PayKind.Full, "PayPal", 74, "Headshots for a small firm."),
-        Stay("Chris Pell", "chris@example.com", "503-555-0114", 2, -52, -50, BookingStatus.Approved, true, PayKind.Full, "Venmo", 56, "Two-day editorial."),
-        Stay("Naomi Hart", "naomi@example.com", "503-555-0166", 1, -36, -35, BookingStatus.Approved, true, PayKind.Full, "PayPal", 40, ""),
-        Stay("Owen Blake", "owen@example.com", "503-555-0181", 1, -21, -20, BookingStatus.Approved, true, PayKind.Full, "Check", 25, "Family portrait."),
-        Stay("Ruth Keller", "ruth@example.com", "503-555-0122", 1, -8, -7, BookingStatus.Approved, true, PayKind.Deposit, "PayPal", 14, "Balance still open."),
-        Stay("Samir Aziz", "samir@example.com", "503-555-0196", 1, 3, 4, BookingStatus.Approved, true, PayKind.Deposit, "Venmo", 9, "Deposit only."),
-        Stay("Holly Trent", "holly@example.com", "503-555-0139", 1, 9, 10, BookingStatus.Approved, false, PayKind.None, "PayPal", 11, "Contract not signed."),
-        Stay("Ben Ito", "ben@example.com", "503-555-0151", 1, 15, 16, BookingStatus.Approved, true, PayKind.Full, "PayPal", 5, "Paid in full."),
-        Stay("Grace Feldman", "grace@example.com", "503-555-0174", 2, 23, 25, BookingStatus.Approved, false, PayKind.None, "PayPal", 1, "Catalog sitting, just approved."),
-        Stay("Paul Ngo", "paul@example.com", "503-555-0107", 1, 30, 31, BookingStatus.Requested, false, PayKind.None, "PayPal", 1, "Morning light if you have it."),
-        Stay("Rita Solis", "rita@example.com", "503-555-0185", 1, 37, 38, BookingStatus.Requested, false, PayKind.None, "Venmo", 2, "Musician portrait."),
-        Stay("Pat Ruiz", "pat@example.com", "503-555-0119", 1, 12, 13, BookingStatus.Declined, false, PayKind.None, "PayPal", 6, "Mara is already booked nearby."),
-        Stay("Kim Alvarez", "kim@example.com", "", 1, 44, 45, BookingStatus.Cancelled, false, PayKind.None, "PayPal", 2, "Client cancelled.")
+        Stay("Ben", "ben@example.com", 3, 6, 9, BookingStatus.Approved, true, PayKind.Full, "Venmo", 8, "Two friends."),
+        Stay("Fran", "fran@example.com", 2, 34, 37, BookingStatus.Requested, false, PayKind.None, "PayPal", 1, "Could we check in at 5?")
+    ];
+
+    private static SeedStay[] ThreeBedStays() =>
+    [
+        Stay("Chris", "chris@example.com", 4, 12, 16, BookingStatus.Approved, true, PayKind.Deposit, "PayPal", 5, "Balance later."),
+        Stay("Glen", "glen@example.com", 5, 42, 46, BookingStatus.Approved, true, PayKind.Full, "Venmo", 3, "")
+    ];
+
+    private static SeedStay[] FourBedStays() =>
+    [
+        Stay("Dana", "dana@example.com", 6, 20, 24, BookingStatus.Requested, false, PayKind.None, "PayPal", 1, "Whole house for a weekend."),
+        Stay("Harper", "harper@example.com", 4, 50, 54, BookingStatus.Declined, false, PayKind.None, "PayPal", 4, "Those nights were already held.")
+    ];
+
+    private static SeedStay[] CottageStays() =>
+    [
+        Stay("Indy", "indy@example.com", 2, 2, 6, BookingStatus.Approved, true, PayKind.Full, "PayPal", 7, ""),
+        Stay("Jules", "jules@example.com", 1, 10, 14, BookingStatus.Approved, true, PayKind.Deposit, "Venmo", 4, "Deposit sent."),
+        Stay("Kai", "kai@example.com", 2, 18, 22, BookingStatus.Requested, false, PayKind.None, "PayPal", 1, ""),
+        Stay("Lane", "lane@example.com", 2, 30, 34, BookingStatus.Approved, false, PayKind.None, "PayPal", 2, "Waiting on the contract."),
+        Stay("Morgan", "morgan@example.com", 1, 40, 44, BookingStatus.Cancelled, false, PayKind.None, "PayPal", 3, "Plans changed."),
+        Stay("Noor", "noor@example.com", 2, 52, 55, BookingStatus.Approved, true, PayKind.Full, "Venmo", 1, "")
     ];
 
     private static async Task SeedStays(
@@ -165,7 +206,7 @@ public static class Seeder
                 GuestToken = $"seed{property.InvoicePrefix.ToLowerInvariant()}{sequence:00}{Guid.NewGuid():N}"[..24],
                 GuestName = stay.Name,
                 GuestEmail = stay.Email,
-                GuestPhone = stay.Phone,
+                GuestPhone = "",
                 Guests = stay.Guests,
                 CheckIn = checkIn,
                 CheckOut = checkOut,
@@ -221,7 +262,6 @@ public static class Seeder
     private static SeedStay Stay(
         string name,
         string email,
-        string phone,
         int guests,
         int inOffset,
         int outOffset,
@@ -231,12 +271,11 @@ public static class Seeder
         string method,
         int approvedDaysAgo,
         string notes) =>
-        new(name, email, phone, guests, inOffset, outOffset, status, signed, payKind, method, approvedDaysAgo, notes);
+        new(name, email, guests, inOffset, outOffset, status, signed, payKind, method, approvedDaysAgo, notes);
 
     private sealed record SeedStay(
         string Name,
         string Email,
-        string Phone,
         int Guests,
         int InOffset,
         int OutOffset,
@@ -246,4 +285,41 @@ public static class Seeder
         string Method,
         int ApprovedDaysAgo,
         string Notes);
+
+    private sealed class ListingFile
+    {
+        public string Slug { get; set; } = "";
+        public string UnitLabel { get; set; } = "";
+        public string AirbnbId { get; set; } = "";
+        public string AirbnbUrl { get; set; } = "";
+        public string Name { get; set; } = "";
+        public int SortOrder { get; set; }
+        public string InvoicePrefix { get; set; } = "";
+        public decimal NightlyRate { get; set; }
+        public int MaxGuests { get; set; }
+        public int Bedrooms { get; set; }
+        public int Beds { get; set; }
+        public double Baths { get; set; }
+        public decimal Rating { get; set; }
+        public int ReviewCount { get; set; }
+        public string Tagline { get; set; } = "";
+        public string Summary { get; set; } = "";
+        public JsonElement Sections { get; set; }
+        public string HouseRules { get; set; } = "";
+        public string CheckInTime { get; set; } = "";
+        public string CheckOutTime { get; set; } = "";
+        public string CheckInInstructions { get; set; } = "";
+        public List<string> Contains { get; set; } = [];
+        public JsonElement Amenities { get; set; }
+        public JsonElement Sleeping { get; set; }
+        public JsonElement Subratings { get; set; }
+        public List<ListingPhoto> Photos { get; set; } = [];
+    }
+
+    private sealed class ListingPhoto
+    {
+        public string Src { get; set; } = "";
+        public string Caption { get; set; } = "";
+        public string Room { get; set; } = "";
+    }
 }

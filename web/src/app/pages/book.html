@@ -15,22 +15,16 @@
       <p class="eyebrow">{{ listing.locationLabel }}</p>
       <h1>{{ listing.name }}</h1>
       <p class="lede">{{ listing.tagline }}</p>
-      <p class="quiet">{{ listing.hostName }}</p>
+      <p class="quiet">{{ listing.hostName }} · {{ listing.hostStats }}</p>
+      <p class="quiet">{{ listing.rating }} from {{ listing.reviewCount }} ratings</p>
       <p class="rate">
-        <strong [appCount]="listing.nightlyRate" [appCountMoney]="true"></strong> a {{ unit(listing) }}
+        From <strong [appCount]="listing.nightlyRate" [appCountMoney]="true"></strong> a night
         <span>{{ listing.minNights }} {{ unit(listing, listing.minNights) }} minimum</span>
         <span>Up to {{ listing.maxGuests }}</span>
       </p>
+      <p><a class="text-link" [href]="listing.airbnbUrl" target="_blank" rel="noreferrer">View on Airbnb</a></p>
     </div>
   </section>
-
-  @if (listing.gallery.length > 1) {
-    <section class="gallery" aria-label="Photos">
-      @for (photo of listing.gallery; track photo) {
-        <img [src]="photo" [alt]="listing.name" />
-      }
-    </section>
-  }
 
   <section class="split">
     <app-calendar
@@ -58,8 +52,12 @@
       } @else if (quote(); as price) {
         <dl class="figures">
           <div><dt>{{ price.nights }} {{ unit(listing, price.nights) }}</dt><dd>{{ money(price.staySubtotal) }}</dd></div>
-          <div><dt>{{ listing.feeLabel }}</dt><dd>{{ money(price.cleaningFee) }}</dd></div>
-          <div><dt>Service</dt><dd>{{ money(price.serviceFee) }}</dd></div>
+          @if (price.cleaningFee) {
+            <div><dt>{{ listing.feeLabel }}</dt><dd>{{ money(price.cleaningFee) }}</dd></div>
+          }
+          @if (price.serviceFee) {
+            <div><dt>Service</dt><dd>{{ money(price.serviceFee) }}</dd></div>
+          }
           <div class="total"><dt>Total</dt><dd [appCount]="price.total" [appCountMoney]="true"></dd></div>
           <div><dt>Deposit {{ price.depositPercent }}%</dt><dd>{{ money(price.depositAmount) }}</dd></div>
           <div><dt>Balance</dt><dd>{{ money(price.balanceAmount) }}</dd></div>
@@ -103,15 +101,61 @@
     </section>
   }
 
+  @if (listing.gallery.length) {
+    <section class="gallery" aria-label="Photos">
+      @for (photo of listing.gallery; track photo.src) {
+        <figure>
+          <img [src]="photo.src" [alt]="photo.caption || photo.room || listing.name" />
+          @if (photo.caption) {
+            <figcaption>{{ photo.caption }}</figcaption>
+          }
+        </figure>
+      }
+    </section>
+  }
+
   <section class="story">
-    <p>{{ listing.description }}</p>
+    <p class="copy">{{ listing.description }}</p>
+    @for (section of listing.sections; track section.title) {
+      <h2>{{ section.title }}</h2>
+      <p class="copy">{{ section.text }}</p>
+    }
   </section>
+
+  @if (listing.sleeping.length) {
+    <section class="story">
+      <h2>Sleeping</h2>
+      @for (bed of listing.sleeping; track bed.room) {
+        <p><strong>{{ bed.room }}</strong>. {{ bed.beds }}</p>
+      }
+    </section>
+  }
+
+  @if (listing.subratings.length) {
+    <section class="story">
+      <h2>Ratings</h2>
+      @for (item of listing.subratings; track item.name) {
+        <p>{{ item.name }} {{ item.score }}</p>
+      }
+    </section>
+  }
+
+  @if (listing.amenities.length) {
+    <section class="story">
+      <h2>Amenities</h2>
+      @for (group of listing.amenities; track group.group) {
+        <h3>{{ group.group }}</h3>
+        <p>{{ group.items.join(', ') }}</p>
+      }
+    </section>
+  }
 
   <section class="trio">
     <article class="panel">
-      <h2>The pin</h2>
-      <app-map [lat]="listing.latitude" [lng]="listing.longitude" [label]="'Map of ' + listing.locationLabel" />
-      <p class="quiet">Fictional demo pin in Portland. Start {{ listing.checkInTime }}, end {{ listing.checkOutTime }}.</p>
+      <h2>Check-in</h2>
+      <p>Check-in {{ listing.checkInTime }}. Checkout {{ listing.checkOutTime }}.</p>
+      <p>{{ listing.checkInInstructions }}</p>
+      <p>{{ holds(listing) }}</p>
     </article>
     <article class="panel">
       <h2>House rules</h2>

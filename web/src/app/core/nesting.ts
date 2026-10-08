@@ -5,17 +5,13 @@ export interface StayUnit {
   contains: readonly string[];
 }
 
-/**
- * Eugene house, four nested stays.
- * The catalog will have five listings. Add the fifth here when its
- * name and its place in the house are known. blockedBy leaves a unit
- * alone when it neither contains the booking nor sits inside it.
- */
+/** Same contains graph the API enforces. The home page replaces this with live listings. */
 export const houseUnits: readonly StayUnit[] = [
-  { id: 'four', name: '4-bed', beds: 4, contains: ['three', 'two', 'studio'] },
-  { id: 'three', name: '3-bed', beds: 3, contains: ['two'] },
-  { id: 'two', name: '2-bed', beds: 2, contains: [] },
-  { id: 'studio', name: 'Studio', beds: 0, contains: [] },
+  { id: 'studio', name: 'Studio', beds: 1, contains: [] },
+  { id: 'two-bed', name: '2-bed', beds: 2, contains: [] },
+  { id: 'three-bed', name: '3-bed', beds: 3, contains: ['two-bed'] },
+  { id: 'four-bed', name: '4-bed', beds: 4, contains: ['three-bed', 'two-bed', 'studio'] },
+  { id: 'cottage', name: 'Cottage', beds: 1, contains: [] },
 ];
 
 export function blockedBy(bookedId: string, units: readonly StayUnit[] = houseUnits): string[] {
@@ -46,17 +42,30 @@ export function blockedBy(bookedId: string, units: readonly StayUnit[] = houseUn
   return units.map((unit) => unit.id).filter((id) => blocked.has(id));
 }
 
-export function blockLine(bookedId: string | null): string {
-  switch (bookedId) {
-    case 'four':
-      return 'A 4-bed booking blocks the 3-bed, the 2-bed, and the studio.';
-    case 'three':
-      return 'A 3-bed booking blocks the 2-bed and the 4-bed. The studio stays open.';
-    case 'two':
-      return 'A 2-bed booking blocks the 3-bed and the 4-bed. The studio stays open.';
-    case 'studio':
-      return 'A studio booking blocks the 4-bed. The 3-bed and the 2-bed stay open.';
-    default:
-      return 'Choose a stay. The rooms that booking blocks light up.';
+export function blockLine(bookedId: string | null, units: readonly StayUnit[] = houseUnits): string {
+  if (!bookedId) {
+    return 'Choose a stay. The rooms that booking blocks light up.';
   }
+  const unit = units.find((item) => item.id === bookedId);
+  if (!unit) {
+    return 'Choose a stay. The rooms that booking blocks light up.';
+  }
+  const names = blockedBy(bookedId, units)
+    .filter((id) => id !== bookedId)
+    .map((id) => units.find((item) => item.id === id)?.name ?? id);
+  if (!names.length) {
+    return `The ${unit.name} links to nothing.`;
+  }
+  return `A ${unit.name} booking blocks ${joinNames(names)}.`;
+}
+
+function joinNames(names: string[]): string {
+  const labeled = names.map((name) => `the ${name}`);
+  if (labeled.length === 1) {
+    return labeled[0];
+  }
+  if (labeled.length === 2) {
+    return `${labeled[0]} and ${labeled[1]}`;
+  }
+  return `${labeled.slice(0, -1).join(', ')}, and ${labeled[labeled.length - 1]}`;
 }

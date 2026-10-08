@@ -1,0 +1,240 @@
+{
+  "slug": "cottage",
+  "unitLabel": "Cottage",
+  "airbnbId": "1595816783999165824",
+  "airbnbUrl": "https://www.airbnb.com/rooms/1595816783999165824",
+  "name": "Hayward Hideaway: Modern Garden Cottage",
+  "sortOrder": 4,
+  "invoicePrefix": "HC",
+  "nightlyRate": 119.5,
+  "maxGuests": 2,
+  "bedrooms": 1,
+  "beds": 1,
+  "baths": 1,
+  "rating": 4.94,
+  "reviewCount": 50,
+  "tagline": "1 bedroom, sleeps 2",
+  "summary": "Steps to Hayward Field & UO! This brand-new private studio is your luxury basecamp. Treat yourself to HEATED FLOORS, a cozy fireplace, and a full kitchen. Tucked in a quiet garden setting, you’re a short walk from Sweet Life Patisserie and campus events. Fast WiFi, workspace, and premium linens included. Managed by a local Superhost to ensure a seamless 5-star experience. Perfect for track fans, parents, and business travelers!",
+  "sections": [
+    {
+      "title": "The space",
+      "text": "The Space Welcome to your private garden retreat! This brand-new, detached studio is designed for seamless, barrier-free living.\n\nThe open-concept layout is highly efficient: your plush double bed flows immediately into the full kitchen and dining area—no hallways or tight corners to navigate. You can hop out of bed and be pouring your morning coffee in seconds.\n\nThe modern bathroom is also directly adjacent to the sleeping area, offering easy access day or night. Inside, you’ll find the studio’s crown jewel: luxurious HEATED FLOORS that make every morning feel like a spa day.\n\nWhether you are curling up by the electric fireplace, working at the dedicated desk, or cooking a meal in the fully stocked kitchen, the space feels open, airy, and incredibly functional."
+    },
+    {
+      "title": "Guest access",
+      "text": "Private & Secure You have exclusive access to the entire studio cottage and your own private patio area for outdoor dining.\n\nParking: Forget the stress of street parking! You have a dedicated parking spot in the driveway, secured behind a locked gate. You will receive a code for the gate prior to arrival, allowing you to pull right up to your private entrance for easy unloading.\n\nThe studio sits behind the main house in a shared garden setting, but your space is completely separate and private."
+    },
+    {
+      "title": "Other things to note",
+      "text": "The gated driveway area is safe and there is a fantastic park directly across the street for morning walks.\n\nClimate Control: The studio is equipped with A/C for warm summer days and an electric fireplace (plus those amazing heated bathroom floors) to keep you cozy in the winter.\n\nWork Ready: High-speed WiFi makes this an ideal spot for remote work or studying."
+    }
+  ],
+  "houseRules": "Check-in after 4:00 PM Checkout before 11:00 AM Self check-in with keypad 2 guests maximum No pets Additional requests. Please just do any dishes. No other checkout instructions :)",
+  "checkInTime": "4:00 PM",
+  "checkOutTime": "11:00 AM",
+  "checkInInstructions": "Self check-in with keypad. Eric sends the code after the request is approved.",
+  "contains": [],
+  "amenities": [
+    {
+      "group": "Bedroom and laundry",
+      "items": [
+        "Washer"
+      ]
+    },
+    {
+      "group": "Entertainment",
+      "items": [
+        "TV"
+      ]
+    },
+    {
+      "group": "Heating and cooling",
+      "items": [
+        "Air conditioning",
+        "Indoor fireplace"
+      ]
+    },
+    {
+      "group": "Home safety",
+      "items": [
+        "Smoke alarm",
+        "Carbon monoxide alarm",
+        "Fire extinguisher",
+        "First aid kit"
+      ]
+    },
+    {
+      "group": "Internet and office",
+      "items": [
+        "Wifi",
+        "Dedicated workspace"
+      ]
+    },
+    {
+      "group": "Kitchen and dining",
+      "items": [
+        "Kitchen",
+        "Cooking basics"
+      ]
+    },
+    {
+      "group": "Outdoor",
+      "items": [
+        "Outdoor dining area",
+        "BBQ grill"
+      ]
+    },
+    {
+      "group": "Parking and facilities",
+      "items": [
+        "Free parking on premises"
+      ]
+    },
+    {
+      "group": "Services",
+      "items": [
+        "Self check-in",
+        "Keypad"
+      ]
+    }
+  ],
+  "sleeping": [],
+  "subratings": [
+    {
+      "name": "Cleanliness",
+      "score": "5.0"
+    },
+    {
+      "name": "Accuracy",
+      "score": "5.0"
+    },
+    {
+      "name": "Check-in",
+      "score": "4.8"
+    },
+    {
+      "name": "Communication",
+      "score": "5.0"
+    },
+    {
+      "name": "Location",
+      "score": "5.0"
+    },
+    {
+      "name": "Value",
+      "score": "4.9"
+    }
+  ],
+  "photos": [
+    {
+      "src": "photos/1595816783999165824/01_full-kitchen.jpg",
+      "caption": "",
+      "room": "Full kitchen"
+    },
+    {
+      "src": "photos/1595816783999165824/02_full-kitchen.jpg",
+      "caption": "",
+      "room": "Full kitchen"
+    },
+    {
+      "src": "photos/1595816783999165824/03_full-kitchen.jpg",
+      "caption": "fully stocked kitchen",
+      "room": "Full kitchen"
+    },
+    {
+      "src": "photos/1595816783999165824/04_full-kitchen.jpg",
+      "caption": "",
+      "room": "Full kitchen"
+    },
+    {
+      "src": "photos/1595816783999165824/05_full-kitchen.jpg",
+      "caption": "",
+      "room": "Full kitchen"
+    },
+    {
+      "src": "photos/1595816783999165824/06_full-kitchen.jpg",
+      "caption": "Refrigerator and freezer with ample space",
+      "room": "Full kitchen"
+    },
+    {
+      "src": "photos/1595816783999165824/07_full-kitchen.jpg",
+      "caption": "Enjoy modern appliances. Eat out or dine in.",
+      "room": "Full kitchen"
+    },
+    {
+      "src": "photos/1595816783999165824/08_bedroom.jpg",
+      "caption": "Everything you need in one stylish room, including a warming fireplace.",
+      "room": "Bedroom"
+    },
+    {
+      "src": "photos/1595816783999165824/09_bedroom.jpg",
+      "caption": "Watch your favorites on mounted smart TV",
+      "room": "Bedroom"
+    },
+    {
+      "src": "photos/1595816783999165824/10_bedroom.jpg",
+      "caption": "View from fireplace corner",
+      "room": "Bedroom"
+    },
+    {
+      "src": "photos/1595816783999165824/11_bedroom.jpg",
+      "caption": "Smart Studio Flow: A thoughtfully designed open layout where your bed, full kitchen, and bathroom are all just steps away from each other.",
+      "room": "Bedroom"
+    },
+    {
+      "src": "photos/1595816783999165824/12_bedroom.jpg",
+      "caption": "Full Bed",
+      "room": "Bedroom"
+    },
+    {
+      "src": "photos/1595816783999165824/13_full-bathroom.jpg",
+      "caption": "",
+      "room": "Full bathroom"
+    },
+    {
+      "src": "photos/1595816783999165824/14_full-bathroom.jpg",
+      "caption": "",
+      "room": "Full bathroom"
+    },
+    {
+      "src": "photos/1595816783999165824/15_full-bathroom.jpg",
+      "caption": "",
+      "room": "Full bathroom"
+    },
+    {
+      "src": "photos/1595816783999165824/16_exterior.jpg",
+      "caption": "",
+      "room": "Exterior"
+    },
+    {
+      "src": "photos/1595816783999165824/17_exterior.jpg",
+      "caption": "Enjoy outdoor seating",
+      "room": "Exterior"
+    },
+    {
+      "src": "photos/1595816783999165824/18_exterior.jpg",
+      "caption": "",
+      "room": "Exterior"
+    },
+    {
+      "src": "photos/1595816783999165824/19_exterior.jpg",
+      "caption": "",
+      "room": "Exterior"
+    },
+    {
+      "src": "photos/1595816783999165824/20_additional-photos.jpg",
+      "caption": "",
+      "room": "Additional photos"
+    },
+    {
+      "src": "photos/1595816783999165824/21_additional-photos.jpg",
+      "caption": "After you park your car, this gate, assures the safety of your vehicle and privacy",
+      "room": "Additional photos"
+    },
+    {
+      "src": "photos/1595816783999165824/22_additional-photos.jpg",
+      "caption": "",
+      "room": "Additional photos"
+    }
+  ]
+}

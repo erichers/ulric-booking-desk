@@ -1,8 +1,11 @@
 <h1>Booking Desk</h1>
-<p class="lede">North Room rents by the night. Mara Ellison books portrait sessions. Both are fictional. PayPal and Venmo use ulric-demo.</p>
+<p class="lede">Five stays in Eugene, OR, near Hayward Field. Eric is a Superhost, 4.92 across 813 reviews. PayPal and Venmo use ulric-demo.</p>
 
 @if (loading()) {
   <section class="catalog" aria-hidden="true">
+    <div class="skeleton block"></div>
+    <div class="skeleton block"></div>
+    <div class="skeleton block"></div>
     <div class="skeleton block"></div>
     <div class="skeleton block"></div>
   </section>
@@ -12,10 +15,10 @@
       <a class="listing" [routerLink]="['/book', listing.slug]">
         <img [src]="listing.heroImage" [alt]="listing.name" />
         <div>
-          <p class="eyebrow">{{ listing.kind }}</p>
+          <p class="eyebrow">{{ listing.unitLabel }} · {{ listing.rating }}</p>
           <h2>{{ listing.name }}</h2>
           <p>{{ listing.tagline }}</p>
-          <p class="quiet">{{ money(listing.nightlyRate) }} a {{ unit(listing) }} · {{ listing.locationLabel }}</p>
+          <p class="quiet">From {{ money(listing.nightlyRate) }} a night · {{ listing.locationLabel }}</p>
         </div>
       </a>
     }
@@ -28,8 +31,8 @@
 
 <section class="house">
   <h2>Nested stays</h2>
-  <p class="lede">One house in Eugene, booked as separate stays. The 4-bed is the whole house. It contains the 3-bed, the 2-bed, and the studio. The 3-bed contains the 2-bed.</p>
-  <app-unit-stack />
+  <p class="lede">Four of these stays are one house. The 4-bed is the whole home. It contains the 3-bed, the 2-bed, and the studio. The 3-bed contains the 2-bed. The garden cottage stands apart and links to nothing.</p>
+  <app-unit-stack [units]="stackUnits()" />
 </section>
 
 <section class="flow-section">

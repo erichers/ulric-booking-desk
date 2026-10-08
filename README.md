@@ -1,14 +1,14 @@
 # Ulric Booking Desk
 
-![North Room and Mara Ellison](docs/screenshots/home-light-desktop.png)
+![Eric's stays near Hayward Field](docs/screenshots/home-light-desktop.png)
 
-Direct booking and invoicing for two fictional businesses: North Room, a small daylight studio rental in Portland, and Mara Ellison, a portrait photographer with her own calendar. Guests request dates on a public page. The host approves the request, collects a signed agreement, tracks the invoice, and keeps reminders in an outbox.
+Direct booking and invoicing for Eric's five stays in Eugene, OR, near Hayward Field. Guests request dates on a public page. The host approves the request, collects a signed agreement, tracks the invoice, and keeps reminders in an outbox. Each listing links to its Airbnb page. Nightly prices are shown as from rates. Demo guests are first names only.
 
 Payment links use the demo handle `ulric-demo`. This desk never charges a card. Nothing is emailed or texted.
 
 ## Features
 
-- A public catalog of both listings, each with free-license photos, a month calendar, and a request form. Open, held, and booked days are marked. Calendars do not share dates.
+- A public catalog of the five stays, each with Eric's listing photos, description, amenities, house rules, a month calendar, and a request form. Open, held, and booked days are marked. Dates held by a linked stay are hatched and labeled with that unit.
 - Host desk with open requests, upcoming bookings, a monthly revenue chart, and settings for each listing: rate, deposit percent, fees, house rules, and cancellation policy.
 - A contract PDF for each approved booking. The guest signs with a typed script or a drawn signature. The file stores the signature image, the time, and the IP address. The host signature is set in advance. Both sides can download the PDF.
 - An invoice per approved booking with line items, deposit, balance, and due dates. PayPal and Venmo links use `ulric-demo`, and each link has a QR code. The host can mark a payment with method, amount, date, and reference. Status chips show unpaid, partial, paid, and overdue.
@@ -28,7 +28,6 @@ Sample agreements and invoices are in `docs/samples/`.
 - QuestPDF community license for agreements and invoices
 - Chart.js for the revenue chart
 - three.js r170 for the nested-stay model, loaded only when that section is on screen
-- Leaflet with OpenStreetMap tiles for the demo pins
 
 ## Motion
 
@@ -36,14 +35,15 @@ Pages fade and rise 12px in 340ms with the curve `cubic-bezier(.2, .7, .2, 1)`. 
 
 The catalog page includes an SVG of the path from request to paid. The line draws in when the section is visible.
 
-The same page has a 3D stack of the Eugene house. The 4-bed is the outer volume and contains the 3-bed, the 2-bed, and the studio. The 3-bed contains the 2-bed. Pick a stay and the rooms that booking blocks light up:
+The same page has a 3D stack of the Eugene house, driven by the same contains graph the API uses. The 4-bed is the outer volume and contains the 3-bed, the 2-bed, and the studio. The 3-bed contains the 2-bed. The garden cottage sits beside the house and links to nothing. Pick a stay and the rooms that booking blocks light up:
 
+- A 4-bed booking blocks the 3-bed, the 2-bed, and the studio.
+- A 3-bed booking blocks the 2-bed and the 4-bed. The studio stays open.
 - A 2-bed booking blocks the 3-bed and the 4-bed. The studio stays open.
 - A studio booking blocks the 4-bed. The 3-bed and the 2-bed stay open.
-- A 3-bed booking blocks the 2-bed and the 4-bed. The studio stays open.
-- A 4-bed booking blocks the 3-bed, the 2-bed, and the studio.
+- A cottage booking blocks only the cottage.
 
-The house model covers these four nested stays. The fifth listing joins it when its name is known. Drag to turn the stack. The render pauses when it leaves the screen and caps the pixel ratio at 2. With reduced motion, or if WebGL is missing, the flat plan stays in its place and does not orbit.
+Drag to turn the stack. The render pauses when it leaves the screen and caps the pixel ratio at 2. With reduced motion, or if WebGL is missing, the flat plan stays in its place and does not orbit.
 
 ![Nested stays](docs/screenshots/stack-light-desktop.png)
 
@@ -63,12 +63,15 @@ Light desktop is the default. The same screens exist in dark mode and at phone w
 | Screen | Light | Dark |
 | --- | --- | --- |
 | Catalog | ![Catalog light](docs/screenshots/home-light-desktop.png) | ![Catalog dark](docs/screenshots/home-dark-desktop.png) |
-| North Room | ![Studio light](docs/screenshots/studio-light-desktop.png) | ![Studio dark](docs/screenshots/studio-dark-desktop.png) |
-| Mara Ellison | ![Photographer light](docs/screenshots/photographer-light-desktop.png) | ![Photographer dark](docs/screenshots/photographer-dark-desktop.png) |
+| Studio | ![Studio light](docs/screenshots/studio-light-desktop.png) | ![Studio dark](docs/screenshots/studio-dark-desktop.png) |
+| 2-bed | ![2-bed light](docs/screenshots/two-bed-light-desktop.png) | ![2-bed dark](docs/screenshots/two-bed-dark-desktop.png) |
+| 3-bed | ![3-bed light](docs/screenshots/three-bed-light-desktop.png) | ![3-bed dark](docs/screenshots/three-bed-dark-desktop.png) |
+| 4-bed | ![4-bed light](docs/screenshots/four-bed-light-desktop.png) | ![4-bed dark](docs/screenshots/four-bed-dark-desktop.png) |
+| Cottage | ![Cottage light](docs/screenshots/cottage-light-desktop.png) | ![Cottage dark](docs/screenshots/cottage-dark-desktop.png) |
 | Host desk | ![Desk light](docs/screenshots/dashboard-light-desktop.png) | ![Desk dark](docs/screenshots/dashboard-dark-desktop.png) |
 | Guest invoice | ![Guest light](docs/screenshots/guest-light-desktop.png) | ![Guest dark](docs/screenshots/guest-dark-desktop.png) |
 
-Phone shots for the catalog, both booking pages, requests, bookings, a booking, the guest page, the outbox, and settings are in the same folder.
+Phone shots for the catalog, each booking page, requests, bookings, a booking, the guest page, the outbox, and settings are in the same folder.
 
 ## Architecture
 
@@ -89,16 +92,16 @@ flowchart LR
 
 The domain project is pure logic: price quotes, date conflicts, invoice status, due dates, payment links, and the reminder schedule. The API stores listings, bookings, contracts, invoices, payments, reminders, and outbox rows. Approving a request snapshots the price, writes an unsigned agreement, opens an invoice, and schedules reminders. The default notification provider only writes a log line. The dispatcher then stores the same message on the Outbox screen.
 
-Held days are requests. Booked days are approved stays. Declined and cancelled stays do not block the calendar. The end date does not overlap the next arrival. Conflicts are scoped to one listing.
+Held days are requests. Booked days are approved stays. Declined and cancelled stays do not block the calendar. The end date does not overlap the next arrival. The 4-bed, 3-bed, 2-bed, and studio share one house, so a stay on one of them can block the others. Booking the 4-bed blocks the 3-bed, the 2-bed, and the studio. Booking the 3-bed blocks the 4-bed and the 2-bed. Booking the 2-bed blocks the 3-bed and the 4-bed. Booking the studio blocks the 4-bed only. The garden cottage links to nothing. The overlap check runs on the server and is safe on MySQL 5.7. The public calendar hatches those nights and names the unit that holds them. The page shows Eugene, OR, near Hayward Field and does not store a street address or a map pin.
 
 ## Data model
 
 | Table | Role |
 | --- | --- |
-| Properties | North Room and Mara Ellison: rates, rules, photo paths, demo payment handles, host signature |
-| Bookings | Guest, dates, snapshotted price, status, guest token |
+| Properties | The five Eugene stays: titles, from rates, rules, photo captions, contains graph, Airbnb URL, demo payment handles, host signature |
+| Bookings | Fictional first-name guests, dates, snapshotted price, status, guest token |
 | Contracts | Agreement text, signature image, signed time, IP, PDF path |
-| Invoices | Number (`NR-` or `ME-`), issue date |
+| Invoices | Number (`ST-`, `TB-`, `TH-`, `FR-`, or `HC-`), issue date |
 | Payments | Method, amount, date, reference |
 | Reminders | Kind, channel, schedule, pending or sent |
 | Outbox | Logged reminder text. Nothing is sent |
@@ -110,14 +113,14 @@ All routes are under `api/`. JSON uses string enums.
 | Method | Path | Purpose |
 | --- | --- | --- |
 | GET | `api/health` | Liveness |
-| GET | `api/properties` | Both listings |
+| GET | `api/properties` | The five listings |
 | GET | `api/properties/{slug}` | One listing |
 | PUT | `api/properties/{slug}` | Update that listing |
-| GET | `api/property` | Default listing (North Room) |
+| GET | `api/property` | Default listing (the studio) |
 | PUT | `api/property` | Update the default listing |
 | GET | `api/property/signature?slug=` | Host signature PNG |
 | POST | `api/property/signature?slug=` | Save the host signature name |
-| GET | `api/availability?from&to&slug=` | Open, held, and booked days |
+| GET | `api/availability?from&to&slug=` | Open, held, booked, and blocked days. Blocked days name the linked unit |
 | POST | `api/quotes` | Price a date range. Optional `propertySlug` |
 | POST | `api/bookings` | Create a request. Optional `propertySlug` |
 | GET | `api/bookings?status=` | Host list |
@@ -237,10 +240,10 @@ Copy `.env.example` for local overrides. Checked-in `appsettings.json` keeps SQL
 dotnet test api/Ulric.BookingDesk.sln
 ```
 
-xUnit covers pricing, availability conflicts, invoice status, reminder scheduling, payment links, public URL joining, and an API flow: seed, quote, conflict, approve, sign, PDF, partial payment, paid. A second flow checks that the studio and the photographer can be requested on the same dates.
+xUnit covers pricing, availability conflicts, the house link graph, invoice status, reminder scheduling, payment links, public URL joining, and an API flow: seed, quote, conflict, approve, sign, PDF, partial payment, paid. Another flow checks that a studio request blocks the 4-bed, a 2-bed request blocks the 3-bed, the studio can still be booked beside the 2-bed, and the cottage can be booked on the studio's dates.
 
 GitHub Actions runs `dotnet test` and `npm run build` on pull requests.
 
 ## Credits
 
-Photographs are optimized JPEGs in `web/public/photos/`. Each source page, photographer, and the Pexels License are listed in [CREDITS.md](CREDITS.md). North Room and Mara Ellison are fictional. The people in the photographs are not those characters.
+Photographs are Eric's own listing photos, resized to 1600px, in `web/public/photos/{airbnbId}/`. [CREDITS.md](CREDITS.md) records that credit. Demo bookings use fictional first names. No guest review text is stored.

@@ -46,8 +46,15 @@ public sealed class ContractPdfBuilder
                         });
 
                         Row(table, $"{booking.Nights} {Plural(rateLabel, booking.Nights)} at {booking.NightlyRate.ToString("C", Money)}", booking.StaySubtotal);
-                        Row(table, string.IsNullOrWhiteSpace(feeLabel) ? "Cleaning fee" : feeLabel, booking.CleaningFee);
-                        Row(table, "Service fee", booking.ServiceFee);
+                        if (booking.CleaningFee != 0)
+                        {
+                            Row(table, string.IsNullOrWhiteSpace(feeLabel) ? "Cleaning fee" : feeLabel, booking.CleaningFee);
+                        }
+
+                        if (booking.ServiceFee != 0)
+                        {
+                            Row(table, "Service fee", booking.ServiceFee);
+                        }
                         Row(table, "Total", booking.Total);
                         Row(table, $"Deposit due {Format(booking.DepositDue)}", booking.DepositAmount);
                         Row(table, $"Balance due {Format(booking.BalanceDue)}", booking.BalanceAmount);

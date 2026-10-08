@@ -5,6 +5,22 @@ using Ulric.BookingDesk.Domain.Reminders;
 
 namespace Ulric.BookingDesk.Api.Models;
 
+public static class ListingCopy
+{
+    public const string Place = "Eugene, OR, near Hayward Field";
+    public const string HostStats = "Superhost, 4.92 across 813 reviews";
+}
+
+public record PhotoDto(string Src, string Caption, string Room);
+
+public record SectionDto(string Title, string Text);
+
+public record AmenityGroupDto(string Group, IReadOnlyList<string> Items);
+
+public record SleepDto(string Room, string Beds);
+
+public record SubratingDto(string Name, string Score);
+
 public record PropertyDto(
     Guid Id,
     string Name,
@@ -12,8 +28,6 @@ public record PropertyDto(
     string Tagline,
     string Description,
     string LocationLabel,
-    double Latitude,
-    double Longitude,
     string ContactEmail,
     string ContactPhone,
     decimal NightlyRate,
@@ -36,10 +50,25 @@ public record PropertyDto(
     string Kind,
     int SortOrder,
     string HeroImage,
-    IReadOnlyList<string> Gallery,
+    IReadOnlyList<PhotoDto> Gallery,
     string RateLabel,
     string FeeLabel,
-    string InvoicePrefix);
+    string InvoicePrefix,
+    string UnitLabel,
+    string AirbnbId,
+    string AirbnbUrl,
+    decimal Rating,
+    int ReviewCount,
+    int Bedrooms,
+    int Beds,
+    double Baths,
+    IReadOnlyList<string> Contains,
+    IReadOnlyList<string> Blocks,
+    IReadOnlyList<SectionDto> Sections,
+    IReadOnlyList<AmenityGroupDto> Amenities,
+    IReadOnlyList<SleepDto> Sleeping,
+    IReadOnlyList<SubratingDto> Subratings,
+    string HostStats);
 
 public record PropertyUpdate(
     string Name,
@@ -47,8 +76,6 @@ public record PropertyUpdate(
     string Tagline,
     string Description,
     string LocationLabel,
-    double Latitude,
-    double Longitude,
     string ContactEmail,
     string ContactPhone,
     decimal NightlyRate,
@@ -68,7 +95,7 @@ public record PropertyUpdate(
 
 public record SignatureUpdate(string Name);
 
-public record DayMarkDto(DateOnly Date, DayState State);
+public record DayMarkDto(DateOnly Date, DayState State, string? BlockedBy);
 
 public record QuoteRequest(DateOnly CheckIn, DateOnly CheckOut, string? PropertySlug = null);
 

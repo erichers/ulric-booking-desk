@@ -7,11 +7,10 @@ import { addDays, money, prettyDate, todayIso } from '../core/format';
 import { BookingDetail, DayMark, Property, Quote } from '../core/models';
 import { CountUp } from '../ui/count-up';
 import { Calendar } from '../ui/calendar';
-import { CottageMap } from '../ui/map';
 
 @Component({
   selector: 'app-book',
-  imports: [Calendar, RouterLink, FormsModule, CottageMap, CountUp],
+  imports: [Calendar, RouterLink, FormsModule, CountUp],
   templateUrl: './book.html',
 })
 export class Book {
@@ -54,7 +53,7 @@ export class Book {
       const days = await firstValueFrom(this.api.availability(addDays(this.today, -10), addDays(this.today, 150), slug));
       this.property.set(property);
       this.days.set(days);
-      this.guests = Math.min(property.kind === 'Photographer' ? 1 : 2, property.maxGuests);
+      this.guests = Math.min(2, property.maxGuests);
       this.error.set('');
     } catch (error) {
       this.error.set(this.api.readError(error));
@@ -115,5 +114,19 @@ export class Book {
   unit(property: Property, count = 1): string {
     const label = property.rateLabel || 'night';
     return count === 1 ? label : `${label}s`;
+  }
+
+  holds(listing: Property): string {
+    if (!listing.blocks.length) {
+      return 'This stay links to nothing else.';
+    }
+    const names = listing.blocks.map((name) => `the ${name}`);
+    if (names.length === 1) {
+      return `Booking this stay also holds ${names[0]}.`;
+    }
+    if (names.length === 2) {
+      return `Booking this stay also holds ${names[0]} and ${names[1]}.`;
+    }
+    return `Booking this stay also holds ${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}.`;
   }
 }

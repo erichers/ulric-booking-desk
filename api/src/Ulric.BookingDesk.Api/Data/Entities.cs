@@ -59,6 +59,19 @@ public class Property
     public string RateLabel { get; set; } = "night";
     public string FeeLabel { get; set; } = "Cleaning fee";
     public string InvoicePrefix { get; set; } = "NR";
+    public string UnitLabel { get; set; } = "";
+    public string AirbnbId { get; set; } = "";
+    public string AirbnbUrl { get; set; } = "";
+    public decimal Rating { get; set; }
+    public int ReviewCount { get; set; }
+    public int Bedrooms { get; set; }
+    public int Beds { get; set; }
+    public double Baths { get; set; }
+    public string ContainsJson { get; set; } = "[]";
+    public string AmenitiesJson { get; set; } = "[]";
+    public string SectionsJson { get; set; } = "[]";
+    public string SleepingJson { get; set; } = "[]";
+    public string SubratingsJson { get; set; } = "[]";
 }
 
 public class Booking
