@@ -3,13 +3,14 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { Api } from '../core/api';
-import { chip, label, money, prettyDate, prettyWhen, stayUnit } from '../core/format';
+import { chip, label, money, paidPercent, prettyDate, prettyWhen, stayUnit } from '../core/format';
 import { BookingDetail } from '../core/models';
+import { Meter } from '../ui/meter';
 import { Qr } from '../ui/qr';
 
 @Component({
   selector: 'app-guest',
-  imports: [RouterLink, Qr, FormsModule],
+  imports: [RouterLink, Qr, FormsModule, Meter],
   templateUrl: './guest.html',
 })
 export class Guest {
@@ -21,6 +22,7 @@ export class Guest {
   readonly chip = chip;
   readonly label = label;
   readonly stayUnit = stayUnit;
+  readonly paidPercent = paidPercent;
 
   readonly loading = signal(true);
   readonly stay = signal<BookingDetail | null>(null);

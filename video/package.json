@@ -1,0 +1,13 @@
+{
+  "name": "ulric-booking-desk-reel",
+  "private": true,
+  "scripts": {
+    "render": "remotion render src/index.ts DeskReel out/desk-reel.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.241",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "remotion": "^4.0.241"
+  }
+}

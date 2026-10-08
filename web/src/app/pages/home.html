@@ -25,3 +25,14 @@
 @if (error()) {
   <p class="banner" role="alert">{{ error() }}</p>
 }
+
+<section class="house">
+  <h2>Nested stays</h2>
+  <p class="lede">One house in Eugene, booked as separate stays. The 4-bed is the whole house. It contains the 3-bed, the 2-bed, and the studio. The 3-bed contains the 2-bed.</p>
+  <app-unit-stack />
+</section>
+
+<section class="flow-section">
+  <h2>Request to paid</h2>
+  <app-flow />
+</section>

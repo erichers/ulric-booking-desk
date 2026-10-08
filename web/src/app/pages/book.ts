@@ -5,12 +5,13 @@ import { firstValueFrom } from 'rxjs';
 import { Api } from '../core/api';
 import { addDays, money, prettyDate, todayIso } from '../core/format';
 import { BookingDetail, DayMark, Property, Quote } from '../core/models';
+import { CountUp } from '../ui/count-up';
 import { Calendar } from '../ui/calendar';
 import { CottageMap } from '../ui/map';
 
 @Component({
   selector: 'app-book',
-  imports: [Calendar, RouterLink, FormsModule, CottageMap],
+  imports: [Calendar, RouterLink, FormsModule, CottageMap, CountUp],
   templateUrl: './book.html',
 })
 export class Book {

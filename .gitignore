@@ -12,5 +12,7 @@ TestResults/
 web/node_modules/
 web/dist/
 web/.angular/
+video/node_modules/
+video/out/
 .env
 .DS_Store

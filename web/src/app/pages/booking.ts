@@ -3,13 +3,14 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { Api } from '../core/api';
-import { chip, feeName, guestCount, label, money, prettyDate, prettyWhen, stayUnit, todayIso } from '../core/format';
+import { chip, feeName, guestCount, label, money, paidPercent, prettyDate, prettyWhen, stayUnit, todayIso } from '../core/format';
 import { BookingDetail } from '../core/models';
+import { Meter } from '../ui/meter';
 import { Qr } from '../ui/qr';
 
 @Component({
   selector: 'app-booking',
-  imports: [FormsModule, RouterLink, Qr],
+  imports: [FormsModule, RouterLink, Qr, Meter],
   templateUrl: './booking.html',
 })
 export class BookingPage {
@@ -23,6 +24,7 @@ export class BookingPage {
   readonly stayUnit = stayUnit;
   readonly feeName = feeName;
   readonly guestCount = guestCount;
+  readonly paidPercent = paidPercent;
 
   readonly loading = signal(true);
   readonly stay = signal<BookingDetail | null>(null);

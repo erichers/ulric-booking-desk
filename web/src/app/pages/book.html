@@ -17,7 +17,7 @@
       <p class="lede">{{ listing.tagline }}</p>
       <p class="quiet">{{ listing.hostName }}</p>
       <p class="rate">
-        <strong>{{ money(listing.nightlyRate) }}</strong> a {{ unit(listing) }}
+        <strong [appCount]="listing.nightlyRate" [appCountMoney]="true"></strong> a {{ unit(listing) }}
         <span>{{ listing.minNights }} {{ unit(listing, listing.minNights) }} minimum</span>
         <span>Up to {{ listing.maxGuests }}</span>
       </p>
@@ -60,7 +60,7 @@
           <div><dt>{{ price.nights }} {{ unit(listing, price.nights) }}</dt><dd>{{ money(price.staySubtotal) }}</dd></div>
           <div><dt>{{ listing.feeLabel }}</dt><dd>{{ money(price.cleaningFee) }}</dd></div>
           <div><dt>Service</dt><dd>{{ money(price.serviceFee) }}</dd></div>
-          <div class="total"><dt>Total</dt><dd>{{ money(price.total) }}</dd></div>
+          <div class="total"><dt>Total</dt><dd [appCount]="price.total" [appCountMoney]="true"></dd></div>
           <div><dt>Deposit {{ price.depositPercent }}%</dt><dd>{{ money(price.depositAmount) }}</dd></div>
           <div><dt>Balance</dt><dd>{{ money(price.balanceAmount) }}</dd></div>
         </dl>

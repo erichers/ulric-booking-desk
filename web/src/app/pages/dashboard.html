@@ -6,10 +6,10 @@
   <div class="skeleton block"></div>
 } @else if (desk(); as desk) {
   <section class="metrics" aria-label="Summary">
-    <article><span>Open requests</span><strong>{{ desk.openRequests }}</strong></article>
-    <article><span>Upcoming stays</span><strong>{{ desk.upcomingStays }}</strong></article>
-    <article><span>Collected this month</span><strong>{{ money(desk.collectedThisMonth) }}</strong></article>
-    <article><span>Still due</span><strong>{{ money(desk.outstanding) }}</strong></article>
+    <article><span>Open requests</span><strong [appCount]="desk.openRequests"></strong></article>
+    <article><span>Upcoming stays</span><strong [appCount]="desk.upcomingStays"></strong></article>
+    <article><span>Collected this month</span><strong [appCount]="desk.collectedThisMonth" [appCountMoney]="true"></strong></article>
+    <article><span>Still due</span><strong [appCount]="desk.outstanding" [appCountMoney]="true"></strong></article>
   </section>
 
   <section class="panel chart-panel">

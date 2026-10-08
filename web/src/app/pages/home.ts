@@ -4,10 +4,12 @@ import { firstValueFrom } from 'rxjs';
 import { Api } from '../core/api';
 import { money } from '../core/format';
 import { Property } from '../core/models';
+import { FlowDiagram } from '../ui/flow-diagram';
+import { UnitStack } from '../ui/unit-stack';
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink],
+  imports: [RouterLink, UnitStack, FlowDiagram],
   templateUrl: './home.html',
 })
 export class Home {

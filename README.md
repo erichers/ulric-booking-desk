@@ -14,7 +14,7 @@ Payment links use the demo handle `ulric-demo`. This desk never charges a card. 
 - An invoice per approved booking with line items, deposit, balance, and due dates. PayPal and Venmo links use `ulric-demo`, and each link has a QR code. The host can mark a payment with method, amount, date, and reference. Status chips show unpaid, partial, paid, and overdue.
 - A reminder schedule for the deposit, the balance, check-in instructions, and a review request. Email is always scheduled. SMS is scheduled when the guest left a phone number. A background service logs due reminders to the Outbox.
 - Light and dark themes. The first visit follows the system preference. The header toggle stores the choice in `localStorage`.
-- Motion for route changes, calendar months, card lists, signature ink, the paid state, and skeleton loaders. `prefers-reduced-motion` turns those animations off.
+- Motion for routes, counts, the revenue chart, the request diagram, and the house model. Details are in the Motion section. `prefers-reduced-motion` keeps those changes instant.
 
 Sample agreements and invoices are in `docs/samples/`.
 
@@ -27,7 +27,34 @@ Sample agreements and invoices are in `docs/samples/`.
 - Pomelo MySQL provider when `Database:Provider` is `MySql` (MySQL 5.7 and 8, utf8mb4)
 - QuestPDF community license for agreements and invoices
 - Chart.js for the revenue chart
+- three.js r170 for the nested-stay model, loaded only when that section is on screen
 - Leaflet with OpenStreetMap tiles for the demo pins
+
+## Motion
+
+Pages fade and rise 12px in 340ms with the curve `cubic-bezier(.2, .7, .2, 1)`. Lists stagger their children. Buttons and the theme control ease color. Switching theme eases the paper and ink. Dashboard figures count up when they enter the view. Monthly bars grow from zero. An invoice draws a thin paid line from empty to the share that has been paid.
+
+The catalog page includes an SVG of the path from request to paid. The line draws in when the section is visible.
+
+The same page has a 3D stack of the Eugene house. The 4-bed is the outer volume and contains the 3-bed, the 2-bed, and the studio. The 3-bed contains the 2-bed. Pick a stay and the rooms that booking blocks light up:
+
+- A 2-bed booking blocks the 3-bed and the 4-bed. The studio stays open.
+- A studio booking blocks the 4-bed. The 3-bed and the 2-bed stay open.
+- A 3-bed booking blocks the 2-bed and the 4-bed. The studio stays open.
+- A 4-bed booking blocks the 3-bed, the 2-bed, and the studio.
+
+The house model covers these four nested stays. The fifth listing joins it when its name is known. Drag to turn the stack. The render pauses when it leaves the screen and caps the pixel ratio at 2. With reduced motion, or if WebGL is missing, the flat plan stays in its place and does not orbit.
+
+![Nested stays](docs/screenshots/stack-light-desktop.png)
+
+`video/` is a Remotion reel of about 25 seconds. It is not part of CI. From that folder:
+
+```bash
+npm install
+npm run render
+```
+
+The file lands at `video/out/desk-reel.mp4`.
 
 ## Screenshot tour
 

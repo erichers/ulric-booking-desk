@@ -60,6 +60,7 @@
         @if (invoice.status === 'Paid') {
           <p class="paid-celebrate" role="status">Paid in full</p>
         }
+        <app-meter [percent]="paidPercent(invoice.amountPaid, stay.total)" />
         <p>Paid {{ money(invoice.amountPaid) }}. Still due {{ money(invoice.amountDue) }}.</p>
         @if (invoice.payments.length) {
           <ul class="plain">

@@ -6,10 +6,12 @@ import { Api } from '../core/api';
 import { chip, label, money, prettyDate } from '../core/format';
 import { Dashboard } from '../core/models';
 import { Theme } from '../core/theme';
+import { prefersReducedMotion } from '../core/motion';
+import { CountUp } from '../ui/count-up';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [RouterLink],
+  imports: [RouterLink, CountUp],
   templateUrl: './dashboard.html',
 })
 export class DeskHome implements AfterViewInit, OnDestroy {
@@ -82,6 +84,7 @@ export class DeskHome implements AfterViewInit, OnDestroy {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        animation: prefersReducedMotion() ? false : { duration: 800, easing: 'easeOutQuart' },
         plugins: {
           legend: { display: false },
           tooltip: {

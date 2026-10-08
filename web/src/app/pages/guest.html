@@ -89,6 +89,7 @@
       @if (invoice.status === 'Paid') {
         <p class="paid-celebrate" role="status">Paid in full</p>
       }
+      <app-meter [percent]="paidPercent(invoice.amountPaid, stay.total)" />
       <dl class="figures">
         @for (line of invoice.lines; track line.label) {
           <div><dt>{{ line.label }}</dt><dd>{{ money(line.amount) }}</dd></div>

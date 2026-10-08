@@ -50,6 +50,13 @@ export function guestCount(count: number): string {
   return `${count} ${count === 1 ? 'guest' : 'guests'}`;
 }
 
+export function paidPercent(paid: number, total: number): number {
+  if (total <= 0) {
+    return 0;
+  }
+  return Math.max(0, Math.min(100, (paid / total) * 100));
+}
+
 export function todayIso(): string {
   const now = new Date();
   const month = `${now.getMonth() + 1}`.padStart(2, '0');
