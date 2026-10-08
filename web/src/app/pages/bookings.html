@@ -1,0 +1,34 @@
+<p class="eyebrow">Host desk</p>
+<h1>Bookings</h1>
+<div class="toggle" role="tablist" aria-label="Filter bookings">
+  @for (item of filters; track item) {
+    <button type="button" [class.active]="filter() === item" (click)="load(item)">{{ item || 'All' }}</button>
+  }
+</div>
+
+@if (loading()) {
+  <div class="skeleton block"></div>
+} @else if (rows().length === 0) {
+  <p class="quiet">Nothing in this list.</p>
+} @else {
+  <ul class="cards">
+    @for (stay of rows(); track stay.id) {
+      <li>
+        <a [routerLink]="['/host/bookings', stay.id]">
+          <strong>{{ stay.guestName }}</strong>
+          <span class="quiet">{{ stay.propertyName }}</span>
+          <span>{{ prettyDate(stay.checkIn) }} to {{ prettyDate(stay.checkOut) }}</span>
+          <span>{{ money(stay.total) }}</span>
+          <span class="chip" [class]="'chip ' + chip(stay.status)">{{ label(stay.status) }}</span>
+          @if (stay.invoiceStatus) {
+            <span class="chip" [class]="'chip ' + chip(stay.invoiceStatus)">{{ label(stay.invoiceStatus) }}</span>
+          }
+        </a>
+      </li>
+    }
+  </ul>
+}
+
+@if (error()) {
+  <p class="banner" role="alert">{{ error() }}</p>
+}

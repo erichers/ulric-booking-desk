@@ -1,0 +1,272 @@
+{
+  "slug": "studio",
+  "unitLabel": "Studio",
+  "airbnbId": "29825358",
+  "airbnbUrl": "https://www.airbnb.com/rooms/29825358",
+  "name": "Modern Studio Steps to Hayward Field + Deck",
+  "sortOrder": 0,
+  "invoicePrefix": "ST",
+  "nightlyRate": 111.0,
+  "maxGuests": 2,
+  "bedrooms": 1,
+  "beds": 1,
+  "baths": 1,
+  "rating": 4.92,
+  "reviewCount": 529,
+  "tagline": "1 bedroom, sleeps 2",
+  "summary": "Immerse yourself in the energy of Eugene from this modern studio located blocks from Hayward Field and the University of Oregon. Designed for the efficient traveler, this space marries minimalism with luxury, featuring cozy heated floors, soaring skylights, and a private deck perfect for morning coffee.\n\n*shares wall with main house. Parking, yard, entrance all your own\n\nWhether you're here for a track meet or a campus tour, this is your serene, light-filled sanctuary in the Historic District.",
+  "sections": [
+    {
+      "title": "The space",
+      "text": "The Space: Light & Air: Vaulted ceilings and generous skylights flood the space with natural light.\n\nLuxury Underfoot: Radiant floor heating ensures you stay cozy even on PNW mornings.\n\nPrivate Outdoors: Step out onto your exclusive private deck—a rare find for a studio.\n\nEfficient Living: While there is no full cooktop, the well-appointed kitchenette features a mini-fridge, Keurig coffee maker, kettle, and essentials to fuel your day.\n\nSleep: A plush Full bed with premium linens guarantees a restorative night's rest."
+    },
+    {
+      "title": "Guest access",
+      "text": "Access to fenced yard and private deck. Your own parking spot for one car. Studio entrance is private not attached to main home."
+    },
+    {
+      "title": "Other things to note",
+      "text": "Enter using the door in front of the driveway. The other door goes to our other Airbnb\n\n- yard is fenced but motivated pups may be able to wiggle out."
+    }
+  ],
+  "houseRules": "Check-in after 3:00 PM Checkout before 11:00 AM Self check-in with smart lock 2 guests maximum Pets allowed No parties or events Commercial photography allowed No smoking Additional rules. Our plumbing System works on a sump pump. Please only flush TP Turn things off",
+  "checkInTime": "3:00 PM",
+  "checkOutTime": "11:00 AM",
+  "checkInInstructions": "Self check-in with smart lock. Eric sends the code after the request is approved.",
+  "contains": [],
+  "amenities": [
+    {
+      "group": "Scenic views",
+      "items": [
+        "Garden view"
+      ]
+    },
+    {
+      "group": "Bathroom",
+      "items": [
+        "Hair dryer",
+        "Cleaning products",
+        "Shampoo",
+        "Conditioner",
+        "Body soap",
+        "Hot water",
+        "Shower gel"
+      ]
+    },
+    {
+      "group": "Bedroom and laundry",
+      "items": [
+        "Essentials",
+        "Hangers",
+        "Bed linens",
+        "Extra pillows and blankets",
+        "Room-darkening shades",
+        "Iron",
+        "Clothing storage: closet, wardrobe, and dresser"
+      ]
+    },
+    {
+      "group": "Entertainment",
+      "items": [
+        "32 inch HDTV with Netflix, Roku, Amazon Prime Video, HBO Max",
+        "Books and reading material"
+      ]
+    },
+    {
+      "group": "Family",
+      "items": [
+        "Crib - available upon request",
+        "Pack ’n play/Travel crib - available upon request",
+        "Babysitter recommendations"
+      ]
+    },
+    {
+      "group": "Heating and cooling",
+      "items": [
+        "Window AC unit",
+        "Heating"
+      ]
+    },
+    {
+      "group": "Home safety",
+      "items": [
+        "Smoke alarm",
+        "Carbon monoxide alarm",
+        "Fire extinguisher",
+        "First aid kit"
+      ]
+    },
+    {
+      "group": "Internet and office",
+      "items": [
+        "Fast wifi – 485 Mbps",
+        "Dedicated workspace"
+      ]
+    },
+    {
+      "group": "Kitchen and dining",
+      "items": [
+        "Dishes and silverware",
+        "Mini fridge",
+        "Hot water kettle",
+        "Coffee maker: Keurig coffee machine, pour-over coffee",
+        "Wine glasses",
+        "Coffee"
+      ]
+    },
+    {
+      "group": "Location features",
+      "items": [
+        "Private entrance",
+        "Laundromat nearby"
+      ]
+    },
+    {
+      "group": "Outdoor",
+      "items": [
+        "Private patio or balcony",
+        "Private backyard – Fully fenced",
+        "Outdoor furniture",
+        "Outdoor dining area"
+      ]
+    },
+    {
+      "group": "Parking and facilities",
+      "items": [
+        "Free driveway parking on premises – 1 space",
+        "Free street parking",
+        "EV charger - level 2",
+        "Single level home"
+      ]
+    },
+    {
+      "group": "Services",
+      "items": [
+        "Pets allowed",
+        "Luggage dropoff allowed",
+        "Long term stays allowed",
+        "Self check-in",
+        "Smart lock"
+      ]
+    }
+  ],
+  "sleeping": [
+    {
+      "room": "Bedroom",
+      "beds": "1 double bed"
+    }
+  ],
+  "subratings": [
+    {
+      "name": "Cleanliness",
+      "score": "5.0"
+    },
+    {
+      "name": "Accuracy",
+      "score": "4.9"
+    },
+    {
+      "name": "Check-in",
+      "score": "5.0"
+    },
+    {
+      "name": "Communication",
+      "score": "5.0"
+    },
+    {
+      "name": "Location",
+      "score": "5.0"
+    },
+    {
+      "name": "Value",
+      "score": "4.8"
+    }
+  ],
+  "photos": [
+    {
+      "src": "photos/29825358/01_bedroom.jpg",
+      "caption": "Welcome :)",
+      "room": "Bedroom"
+    },
+    {
+      "src": "photos/29825358/02_bedroom.jpg",
+      "caption": "Enjoy Roku TV with all the apps you'll need",
+      "room": "Bedroom"
+    },
+    {
+      "src": "photos/29825358/03_bedroom.jpg",
+      "caption": "",
+      "room": "Bedroom"
+    },
+    {
+      "src": "photos/29825358/04_bedroom.jpg",
+      "caption": "Welcome! Plenty of closet and storage space.",
+      "room": "Bedroom"
+    },
+    {
+      "src": "photos/29825358/05_bedroom.jpg",
+      "caption": "Enjoy coffee and tea on us :)",
+      "room": "Bedroom"
+    },
+    {
+      "src": "photos/29825358/06_bedroom.jpg",
+      "caption": "Panorama of the studio",
+      "room": "Bedroom"
+    },
+    {
+      "src": "photos/29825358/07_bedroom.jpg",
+      "caption": "Panorama of the studio with view to your deck",
+      "room": "Bedroom"
+    },
+    {
+      "src": "photos/29825358/08_full-bathroom.jpg",
+      "caption": "",
+      "room": "Full bathroom"
+    },
+    {
+      "src": "photos/29825358/09_full-bathroom.jpg",
+      "caption": "",
+      "room": "Full bathroom"
+    },
+    {
+      "src": "photos/29825358/10_full-bathroom.jpg",
+      "caption": "",
+      "room": "Full bathroom"
+    },
+    {
+      "src": "photos/29825358/11_full-bathroom.jpg",
+      "caption": "",
+      "room": "Full bathroom"
+    },
+    {
+      "src": "photos/29825358/12_backyard.jpg",
+      "caption": "",
+      "room": "Backyard"
+    },
+    {
+      "src": "photos/29825358/13_backyard.jpg",
+      "caption": "",
+      "room": "Backyard"
+    },
+    {
+      "src": "photos/29825358/14_patio.jpg",
+      "caption": "",
+      "room": "Patio"
+    },
+    {
+      "src": "photos/29825358/15_exterior.jpg",
+      "caption": "Your entrance is in front of the driveway.",
+      "room": "Exterior"
+    },
+    {
+      "src": "photos/29825358/16_additional-photos.jpg",
+      "caption": "",
+      "room": "Additional photos"
+    },
+    {
+      "src": "photos/29825358/17_additional-photos.jpg",
+      "caption": "Drone View from 30 ft above studio",
+      "room": "Additional photos"
+    }
+  ]
+}

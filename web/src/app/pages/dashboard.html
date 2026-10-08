@@ -1,0 +1,70 @@
+<p class="eyebrow">Host desk</p>
+<h1>Today</h1>
+
+@if (loading()) {
+  <div class="skeleton line"></div>
+  <div class="skeleton block"></div>
+} @else if (desk(); as desk) {
+  <section class="metrics" aria-label="Summary">
+    <article><span>Open requests</span><strong [appCount]="desk.openRequests"></strong></article>
+    <article><span>Upcoming stays</span><strong [appCount]="desk.upcomingStays"></strong></article>
+    <article><span>Collected this month</span><strong [appCount]="desk.collectedThisMonth" [appCountMoney]="true"></strong></article>
+    <article><span>Still due</span><strong [appCount]="desk.outstanding" [appCountMoney]="true"></strong></article>
+  </section>
+
+  <section class="panel chart-panel">
+    <h2>Collected by month</h2>
+    <div class="chart-wrap">
+      <canvas #chart aria-label="Collected payments by month"></canvas>
+    </div>
+  </section>
+
+  <section class="split tight">
+    <div>
+      <div class="panel-head">
+        <h2>Upcoming</h2>
+        <a class="text-link" routerLink="/host/bookings">All bookings</a>
+      </div>
+      @if (desk.upcoming.length === 0) {
+        <p class="quiet">No upcoming stays.</p>
+      }
+      <ul class="cards">
+        @for (stay of desk.upcoming; track stay.id) {
+          <li>
+            <a [routerLink]="['/host/bookings', stay.id]">
+              <strong>{{ stay.guestName }}</strong>
+              <span class="quiet">{{ stay.propertyName }}</span>
+              <span>{{ prettyDate(stay.checkIn) }} to {{ prettyDate(stay.checkOut) }}</span>
+              <span class="chip" [class]="'chip ' + chip(stay.invoiceStatus)">{{ label(stay.invoiceStatus) }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    </div>
+    <div>
+      <div class="panel-head">
+        <h2>Requests</h2>
+        <a class="text-link" routerLink="/host/requests">Review</a>
+      </div>
+      @if (desk.recentRequests.length === 0) {
+        <p class="quiet">No open requests.</p>
+      }
+      <ul class="cards">
+        @for (stay of desk.recentRequests; track stay.id) {
+          <li>
+            <a [routerLink]="['/host/bookings', stay.id]">
+              <strong>{{ stay.guestName }}</strong>
+              <span class="quiet">{{ stay.propertyName }}</span>
+              <span>{{ prettyDate(stay.checkIn) }} to {{ prettyDate(stay.checkOut) }}</span>
+              <span>{{ money(stay.total) }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    </div>
+  </section>
+}
+
+@if (error()) {
+  <p class="banner" role="alert">{{ error() }}</p>
+}

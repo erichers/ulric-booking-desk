@@ -1,0 +1,63 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    ports:
+      - "5080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      Database__Provider: ${Database__Provider:-Sqlite}
+      Database__MySqlVersion: ${Database__MySqlVersion:-}
+      ConnectionStrings__Default: ${ConnectionStrings__Default:-Data Source=/data/ulric.db}
+      ConnectionStrings__MySql: ${ConnectionStrings__MySql:-}
+      Storage__Root: /data
+      Desk__RemindersEnabled: "true"
+      Desk__ReminderIntervalSeconds: "30"
+      Desk__TimeZone: America/Los_Angeles
+      Desk__PublicBaseUrl: ${Desk__PublicBaseUrl:-}
+    volumes:
+      - ulric-data:/data
+    depends_on:
+      mysql:
+        condition: service_healthy
+        required: false
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/api/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web
+    ports:
+      - "8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  mysql:
+    image: mysql:5.7
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-ulric}
+      MYSQL_USER: ${MYSQL_USER:-ulric}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-ulric-demo}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-ulric-demo}
+    ports:
+      - "3306:3306"
+    volumes:
+      - ulric-mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  ulric-data:
+  ulric-mysql:

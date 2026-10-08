@@ -1,0 +1,11 @@
+**/.git
+**/.vs
+**/bin
+**/obj
+**/node_modules
+**/dist
+**/.angular
+**/*.db
+**/data
+docs/screenshots
+agent-tools

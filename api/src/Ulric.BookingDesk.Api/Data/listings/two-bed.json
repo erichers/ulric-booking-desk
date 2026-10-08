@@ -1,0 +1,353 @@
+{
+  "slug": "two-bed",
+  "unitLabel": "2-bed",
+  "airbnbId": "895561804729837680",
+  "airbnbUrl": "https://www.airbnb.com/rooms/895561804729837680",
+  "name": "2-Bed Suite: Steps to Hayward w/ Full Kitchen",
+  "sortOrder": 1,
+  "invoicePrefix": "TB",
+  "nightlyRate": 197.0,
+  "maxGuests": 4,
+  "bedrooms": 2,
+  "beds": 2,
+  "baths": 1,
+  "rating": 4.93,
+  "reviewCount": 110,
+  "tagline": "2 bedrooms, sleeps 4",
+  "summary": "Skip the hotel and book your own private wing in the Historic District. This 2-bedroom suite offers the ultimate Basecamp experience prioritizing premium sleeping quarters and a fully equipped kitchen for groups who spend their days exploring.\n\nLocated steps from Hayward Field, it is designed for colleagues, couples, or small families who need a comfortable launchpad with real bedrooms and a dedicated dining hub.",
+  "sections": [
+    {
+      "title": "The space",
+      "text": "Two spacious bedrooms, each with a Queen bed, offer equal comfort for all guests. The heart of the unit is the full kitchen and dining table perfect for team breakfasts or late-night planning sessions. Please note, this unit prioritizes bedroom size and kitchen utility. There is no traditional living room with a sofa, making it ideal for active groups who are out and about. Fast Wi-Fi and dedicated workspace make it easy to stay connected."
+    },
+    {
+      "title": "Guest access",
+      "text": "This place shares a yard with another one of our Airbnb rentals. The yard is divided by a fence and our other rental allows dogs as well so just be mindful.\n\n* occasionally, our cleaners will need to use the basement laundry. Be aware between 11am - 3pm, we may briefly walk through the shared basement area to access the laundry."
+    },
+    {
+      "title": "Other things to note",
+      "text": "* Parking space is suitable for two small cars back to back or one truck. Not appropriate for 2 large vehicles :("
+    }
+  ],
+  "houseRules": "Check-in after 3:00 PM Checkout before 11:00 AM Self check-in with smart lock 4 guests maximum Pets allowed Commercial photography allowed No smoking Additional requests. All we ask is that you do any dishes. If you do use the trash outside, please make sure the trash goes into the green container. Recycling is the big blue container.",
+  "checkInTime": "3:00 PM",
+  "checkOutTime": "11:00 AM",
+  "checkInInstructions": "Self check-in with smart lock. Eric sends the code after the request is approved.",
+  "contains": [],
+  "amenities": [
+    {
+      "group": "Scenic views",
+      "items": [
+        "Garden view"
+      ]
+    },
+    {
+      "group": "Bathroom",
+      "items": [
+        "Bathtub",
+        "Hair dryer",
+        "Cleaning products",
+        "Shampoo",
+        "Conditioner",
+        "Body soap",
+        "Hot water",
+        "Shower gel"
+      ]
+    },
+    {
+      "group": "Bedroom and laundry",
+      "items": [
+        "Free washer – In unit",
+        "Free dryer – In unit",
+        "Essentials",
+        "Hangers",
+        "Bed linens",
+        "Extra pillows and blankets",
+        "Room-darkening shades",
+        "Iron",
+        "Drying rack for clothing",
+        "Clothing storage"
+      ]
+    },
+    {
+      "group": "Entertainment",
+      "items": [
+        "Ethernet connection",
+        "TV",
+        "Books and reading material"
+      ]
+    },
+    {
+      "group": "Family",
+      "items": [
+        "Crib",
+        "Pack ’n play/Travel crib",
+        "Children’s books and toys",
+        "Children’s dinnerware",
+        "Board games",
+        "Babysitter recommendations",
+        "Children's playroom"
+      ]
+    },
+    {
+      "group": "Heating and cooling",
+      "items": [
+        "Central air conditioning",
+        "Indoor fireplace: wood-burning",
+        "Heating"
+      ]
+    },
+    {
+      "group": "Home safety",
+      "items": [
+        "Exterior security cameras on property",
+        "Smoke alarm",
+        "Carbon monoxide alarm",
+        "Fire extinguisher",
+        "First aid kit"
+      ]
+    },
+    {
+      "group": "Internet and office",
+      "items": [
+        "Fast wifi – 442 Mbps",
+        "Dedicated workspace"
+      ]
+    },
+    {
+      "group": "Kitchen and dining",
+      "items": [
+        "Kitchen",
+        "Refrigerator",
+        "Microwave",
+        "Cooking basics",
+        "Dishes and silverware",
+        "Mini fridge",
+        "Freezer",
+        "Other electric stove",
+        "Oven",
+        "Hot water kettle",
+        "Coffee maker: Keurig coffee machine, pour-over coffee",
+        "Wine glasses",
+        "Toaster",
+        "Baking sheet",
+        "Dining table",
+        "Coffee"
+      ]
+    },
+    {
+      "group": "Location features",
+      "items": [
+        "Private entrance",
+        "Laundromat nearby"
+      ]
+    },
+    {
+      "group": "Outdoor",
+      "items": [
+        "Shared patio or balcony",
+        "Private backyard – Fully fenced",
+        "Fire pit",
+        "Outdoor furniture",
+        "Outdoor dining area"
+      ]
+    },
+    {
+      "group": "Parking and facilities",
+      "items": [
+        "Free parking on premises",
+        "Free street parking",
+        "EV charger - level 2",
+        "Single level home"
+      ]
+    },
+    {
+      "group": "Services",
+      "items": [
+        "Pets allowed",
+        "Luggage dropoff allowed",
+        "Long term stays allowed",
+        "Self check-in",
+        "Smart lock"
+      ]
+    }
+  ],
+  "sleeping": [
+    {
+      "room": "Bedroom 1",
+      "beds": "1 queen bed"
+    },
+    {
+      "room": "Bedroom 2",
+      "beds": "1 queen bed"
+    }
+  ],
+  "subratings": [
+    {
+      "name": "Cleanliness",
+      "score": "4.9"
+    },
+    {
+      "name": "Accuracy",
+      "score": "5.0"
+    },
+    {
+      "name": "Check-in",
+      "score": "5.0"
+    },
+    {
+      "name": "Communication",
+      "score": "5.0"
+    },
+    {
+      "name": "Location",
+      "score": "5.0"
+    },
+    {
+      "name": "Value",
+      "score": "4.9"
+    }
+  ],
+  "photos": [
+    {
+      "src": "photos/895561804729837680/01_living-room.jpg",
+      "caption": "\"Secret\" table folds up in case you want to work, or snack easier ;)",
+      "room": "Living room"
+    },
+    {
+      "src": "photos/895561804729837680/02_living-room.jpg",
+      "caption": "",
+      "room": "Living room"
+    },
+    {
+      "src": "photos/895561804729837680/03_living-room.jpg",
+      "caption": "\"Secret\" table folds up in case you want to work, or snack easier ;)",
+      "room": "Living room"
+    },
+    {
+      "src": "photos/895561804729837680/04_living-room.jpg",
+      "caption": "",
+      "room": "Living room"
+    },
+    {
+      "src": "photos/895561804729837680/05_living-room.jpg",
+      "caption": "",
+      "room": "Living room"
+    },
+    {
+      "src": "photos/895561804729837680/06_full-kitchen.jpg",
+      "caption": "",
+      "room": "Full kitchen"
+    },
+    {
+      "src": "photos/895561804729837680/07_full-kitchen.jpg",
+      "caption": "",
+      "room": "Full kitchen"
+    },
+    {
+      "src": "photos/895561804729837680/08_full-kitchen.jpg",
+      "caption": "",
+      "room": "Full kitchen"
+    },
+    {
+      "src": "photos/895561804729837680/09_dining-area.jpg",
+      "caption": "",
+      "room": "Dining area"
+    },
+    {
+      "src": "photos/895561804729837680/10_dining-area.jpg",
+      "caption": "",
+      "room": "Dining area"
+    },
+    {
+      "src": "photos/895561804729837680/11_bedroom-1.jpg",
+      "caption": "Bedroom 2 with Queen Bed and Work Station",
+      "room": "Bedroom 1"
+    },
+    {
+      "src": "photos/895561804729837680/12_bedroom-1.jpg",
+      "caption": "",
+      "room": "Bedroom 1"
+    },
+    {
+      "src": "photos/895561804729837680/13_bedroom-1.jpg",
+      "caption": "",
+      "room": "Bedroom 1"
+    },
+    {
+      "src": "photos/895561804729837680/14_bedroom-2.jpg",
+      "caption": "",
+      "room": "Bedroom 2"
+    },
+    {
+      "src": "photos/895561804729837680/15_bedroom-2.jpg",
+      "caption": "",
+      "room": "Bedroom 2"
+    },
+    {
+      "src": "photos/895561804729837680/16_bedroom-2.jpg",
+      "caption": "",
+      "room": "Bedroom 2"
+    },
+    {
+      "src": "photos/895561804729837680/17_bedroom-2.jpg",
+      "caption": "",
+      "room": "Bedroom 2"
+    },
+    {
+      "src": "photos/895561804729837680/18_full-bathroom.jpg",
+      "caption": "",
+      "room": "Full bathroom"
+    },
+    {
+      "src": "photos/895561804729837680/19_full-bathroom.jpg",
+      "caption": "",
+      "room": "Full bathroom"
+    },
+    {
+      "src": "photos/895561804729837680/20_office.jpg",
+      "caption": "",
+      "room": "Office"
+    },
+    {
+      "src": "photos/895561804729837680/21_backyard.jpg",
+      "caption": "",
+      "room": "Backyard"
+    },
+    {
+      "src": "photos/895561804729837680/22_backyard.jpg",
+      "caption": "",
+      "room": "Backyard"
+    },
+    {
+      "src": "photos/895561804729837680/23_laundry-area.jpg",
+      "caption": "",
+      "room": "Laundry area"
+    },
+    {
+      "src": "photos/895561804729837680/24_exterior.jpg",
+      "caption": "",
+      "room": "Exterior"
+    },
+    {
+      "src": "photos/895561804729837680/25_exterior.jpg",
+      "caption": "",
+      "room": "Exterior"
+    },
+    {
+      "src": "photos/895561804729837680/26_exterior.jpg",
+      "caption": "View from over the house",
+      "room": "Exterior"
+    },
+    {
+      "src": "photos/895561804729837680/27_exterior.jpg",
+      "caption": "Shows both entrances to house and studio",
+      "room": "Exterior"
+    },
+    {
+      "src": "photos/895561804729837680/28_additional-photos.jpg",
+      "caption": "",
+      "room": "Additional photos"
+    }
+  ]
+}
