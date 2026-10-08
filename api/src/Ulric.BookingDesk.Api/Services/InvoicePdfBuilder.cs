@@ -11,7 +11,7 @@ public sealed class InvoicePdfBuilder
 {
     private static readonly CultureInfo Money = CultureInfo.GetCultureInfo("en-US");
 
-    public byte[] Build(Booking booking, Property property, InvoicePaymentStatus status, decimal paid)
+    public byte[] Build(Booking booking, Property property, InvoicePaymentStatus status, decimal paid, string? paypalHandle, string? venmoHandle)
     {
         var invoice = booking.Invoice ?? throw new InvalidOperationException("Invoice is missing.");
         var due = Math.Max(0, booking.Total - paid);
@@ -83,9 +83,21 @@ public sealed class InvoicePdfBuilder
                         }
                     }
 
-                    column.Item().PaddingTop(12).Text("Pay the demo handles only. This invoice does not charge a card.");
-                    column.Item().Text($"PayPal: paypal.me/{property.PaypalHandle}");
-                    column.Item().Text($"Venmo: {property.VenmoHandle}");
+                    column.Item().PaddingTop(12).Text("Pay by PayPal or Venmo. This invoice does not charge a card. There is no Airbnb service fee.");
+                    if (!string.IsNullOrWhiteSpace(paypalHandle))
+                    {
+                        column.Item().Text($"PayPal: paypal.me/{paypalHandle}");
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(venmoHandle))
+                    {
+                        column.Item().Text($"Venmo: venmo.com/{venmoHandle}");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(paypalHandle) && string.IsNullOrWhiteSpace(venmoHandle))
+                    {
+                        column.Item().Text("PayPal or Venmo, details after approval.");
+                    }
                 });
 
                 page.Footer().AlignCenter().Text(text =>

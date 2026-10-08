@@ -216,7 +216,9 @@ public record BookingDetailDto(
     decimal AmountPaid,
     InvoiceDto? Invoice,
     ContractDto? Contract,
-    IReadOnlyList<ReminderDto> Reminders);
+    IReadOnlyList<ReminderDto> Reminders,
+    DateTimeOffset? HoldUntil,
+    string HostPhone);
 
 public record MonthTotalDto(string Month, string Label, decimal Amount);
 

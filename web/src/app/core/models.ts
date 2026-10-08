@@ -151,7 +151,7 @@ export interface BookingSummary {
   checkIn: string;
   checkOut: string;
   notes: string;
-  status: 'Requested' | 'Approved' | 'Declined' | 'Cancelled';
+  status: 'Requested' | 'Approved' | 'Declined' | 'Cancelled' | 'Confirmed' | 'Expired';
   nights: number;
   total: number;
   depositAmount: number;
@@ -180,6 +180,8 @@ export interface BookingDetail extends BookingSummary {
   invoice: Invoice | null;
   contract: ContractInfo | null;
   reminders: Reminder[];
+  holdUntil: string | null;
+  hostPhone: string;
 }
 
 export interface MonthTotal {

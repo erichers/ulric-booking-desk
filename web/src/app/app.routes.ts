@@ -11,6 +11,7 @@ import { Settings } from './pages/settings';
 
 export const routes: Routes = [
   { path: '', component: Home },
+  { path: 'book', component: Book },
   { path: 'book/:slug', component: Book },
   { path: 'stay/:token', component: Guest },
   { path: 'host', component: DeskHome },

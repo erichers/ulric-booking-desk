@@ -83,6 +83,8 @@ public sealed class ReminderDispatchService(
             try
             {
                 using var scope = scopes.CreateScope();
+                var workflow = scope.ServiceProvider.GetRequiredService<BookingWorkflow>();
+                await workflow.ExpireRequestsAsync(stoppingToken);
                 var dispatcher = scope.ServiceProvider.GetRequiredService<ReminderDispatcher>();
                 await dispatcher.DispatchDueAsync(stoppingToken);
             }

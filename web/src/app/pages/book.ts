@@ -1,9 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { Api } from '../core/api';
-import { addDays, money, prettyDate, todayIso } from '../core/format';
+import { addDays, money, prettyDate, prettyWhen, todayIso } from '../core/format';
 import { BookingDetail, DayMark, Property, Quote } from '../core/models';
 import { CountUp } from '../ui/count-up';
 import { Calendar } from '../ui/calendar';
@@ -16,8 +16,10 @@ import { Calendar } from '../ui/calendar';
 export class Book {
   private readonly api = inject(Api);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   readonly money = money;
   readonly prettyDate = prettyDate;
+  readonly prettyWhen = prettyWhen;
   readonly today = todayIso();
 
   readonly loading = signal(true);
@@ -30,6 +32,7 @@ export class Book {
   readonly quoting = signal(false);
   readonly submitting = signal(false);
   readonly confirmation = signal<BookingDetail | null>(null);
+  readonly catalog = signal<Property[]>([]);
 
   guests = 2;
   guestName = '';
@@ -42,24 +45,44 @@ export class Book {
   }
 
   async load(): Promise<void> {
-    const slug = this.route.snapshot.paramMap.get('slug') ?? '';
+    const slug = this.route.snapshot.paramMap.get('slug');
     this.loading.set(true);
     this.confirmation.set(null);
     this.checkIn.set(null);
     this.checkOut.set(null);
     this.quote.set(null);
     try {
-      const property = await firstValueFrom(this.api.property(slug));
-      const days = await firstValueFrom(this.api.availability(addDays(this.today, -10), addDays(this.today, 150), slug));
+      const rows = await firstValueFrom(this.api.properties());
+      this.catalog.set(rows);
+      if (!slug) {
+        this.property.set(null);
+        this.days.set([]);
+        this.error.set('');
+        return;
+      }
+      const property = rows.find((item) => item.slug === slug) ?? await firstValueFrom(this.api.property(slug));
+      const days = await firstValueFrom(this.api.availability(addDays(this.today, -10), addDays(this.today, 150), property.slug));
       this.property.set(property);
       this.days.set(days);
       this.guests = Math.min(2, property.maxGuests);
       this.error.set('');
     } catch (error) {
+      this.property.set(null);
       this.error.set(this.api.readError(error));
     } finally {
       this.loading.set(false);
     }
+  }
+
+  choose(slug: string): void {
+    if (!slug || slug === this.property()?.slug) {
+      return;
+    }
+    void this.router.navigate(['/book', slug]);
+  }
+
+  rules(text: string): string[] {
+    return text.split('\n').map((line) => line.trim()).filter((line) => line.length > 0);
   }
 
   async onPicked(selection: { checkIn: string; checkOut: string | null }): Promise<void> {

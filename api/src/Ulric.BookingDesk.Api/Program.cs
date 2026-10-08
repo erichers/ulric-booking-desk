@@ -37,6 +37,8 @@ builder.Services.AddDbContext<DeskDb>(options =>
     }
 });
 builder.Services.Configure<DeskOptions>(builder.Configuration.GetSection("Desk"));
+builder.Services.Configure<PaymentOptions>(builder.Configuration.GetSection("Payments"));
+builder.Services.Configure<DeskHostOptions>(builder.Configuration.GetSection("Host"));
 builder.Services.AddSingleton<IDeskClock, DeskClock>();
 builder.Services.AddSingleton<StoragePaths>();
 builder.Services.AddSingleton<SignatureRenderer>();
@@ -66,7 +68,10 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
     var workflow = scope.ServiceProvider.GetRequiredService<BookingWorkflow>();
     var clock = scope.ServiceProvider.GetRequiredService<IDeskClock>();
-    await Seeder.SeedAsync(workflow, db, clock, app.Environment.ContentRootPath, CancellationToken.None);
+    var desk = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<DeskOptions>>().Value;
+    var payments = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<PaymentOptions>>().Value;
+    var host = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<DeskHostOptions>>().Value;
+    await Seeder.SeedAsync(workflow, db, clock, app.Environment.ContentRootPath, desk, payments, host, CancellationToken.None);
 }
 
 app.UseExceptionHandler(handler =>

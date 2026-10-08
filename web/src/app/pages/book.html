@@ -7,15 +7,41 @@
     </div>
     <div class="skeleton block"></div>
   </section>
+} @else if (!property()) {
+  <p class="eyebrow">Direct booking</p>
+  <h1>Book a stay</h1>
+  <p class="lede">Pick a property and dates. The nights are held when you send the request. PayPal or Venmo, details after approval. There is no Airbnb service fee.</p>
+  @if (catalog()[0]; as host) {
+    <p class="host-line">{{ host.hostName }} · {{ host.hostStats }}</p>
+  }
+  <section class="catalog">
+    @for (item of catalog(); track item.id) {
+      <a class="listing" [routerLink]="['/book', item.slug]">
+        <img [src]="item.heroImage" [alt]="item.name" />
+        <div>
+          <p class="eyebrow">{{ item.unitLabel }}</p>
+          <h2>{{ item.name }}</h2>
+          <p>{{ item.tagline }}</p>
+          <p class="quiet">From {{ money(item.nightlyRate) }} a night · {{ item.locationLabel }}</p>
+        </div>
+      </a>
+    }
+  </section>
 } @else if (property(); as listing) {
-  <p class="back"><a class="text-link" routerLink="/">All listings</a></p>
+  <p class="back"><a class="text-link" routerLink="/book">All stays</a></p>
+  <label class="stay-pick">Stay
+    <select name="stay" [ngModel]="listing.slug" (ngModelChange)="choose($event)">
+      @for (item of catalog(); track item.slug) {
+        <option [value]="item.slug">{{ item.unitLabel }} · {{ item.name }}</option>
+      }
+    </select>
+  </label>
   <section class="hero with-photo">
     <img class="hero-photo" [src]="listing.heroImage" [alt]="listing.name" />
     <div>
       <p class="eyebrow">{{ listing.locationLabel }}</p>
       <h1>{{ listing.name }}</h1>
       <p class="lede">{{ listing.tagline }}</p>
-      <p class="quiet">{{ listing.hostName }} · {{ listing.hostStats }}</p>
       <p class="quiet">{{ listing.rating }} from {{ listing.reviewCount }} ratings</p>
       <p class="rate">
         From <strong [appCount]="listing.nightlyRate" [appCountMoney]="true"></strong> a night
@@ -55,13 +81,13 @@
           @if (price.cleaningFee) {
             <div><dt>{{ listing.feeLabel }}</dt><dd>{{ money(price.cleaningFee) }}</dd></div>
           }
-          @if (price.serviceFee) {
-            <div><dt>Service</dt><dd>{{ money(price.serviceFee) }}</dd></div>
-          }
           <div class="total"><dt>Total</dt><dd [appCount]="price.total" [appCountMoney]="true"></dd></div>
-          <div><dt>Deposit {{ price.depositPercent }}%</dt><dd>{{ money(price.depositAmount) }}</dd></div>
-          <div><dt>Balance</dt><dd>{{ money(price.balanceAmount) }}</dd></div>
+          @if (price.depositAmount) {
+            <div><dt>Deposit due after approval</dt><dd>{{ money(price.depositAmount) }}</dd></div>
+            <div><dt>Balance</dt><dd>{{ money(price.balanceAmount) }}</dd></div>
+          }
         </dl>
+        <p class="quiet">No Airbnb service fee. PayPal or Venmo, details after approval.</p>
         @if (price.nights < listing.minNights) {
           <p class="hint">This listing asks for at least {{ listing.minNights }} {{ unit(listing, listing.minNights) }}.</p>
         }
@@ -76,8 +102,8 @@
       <label>Email
         <input type="email" name="guestEmail" [(ngModel)]="guestEmail" autocomplete="email" required />
       </label>
-      <label>Phone <span class="optional">optional, for SMS reminders</span>
-        <input name="guestPhone" [(ngModel)]="guestPhone" autocomplete="tel" />
+      <label>Phone
+        <input name="guestPhone" [(ngModel)]="guestPhone" autocomplete="tel" required minlength="7" />
       </label>
       <label>Note
         <textarea name="notes" rows="3" [(ngModel)]="notes"></textarea>
@@ -96,7 +122,7 @@
   @if (confirmation(); as stay) {
     <section class="panel confirm">
       <h2>Request sent</h2>
-      <p>{{ stay.guestName }}, {{ prettyDate(stay.checkIn) }} to {{ prettyDate(stay.checkOut) }} is held until {{ listing.hostName }} approves it.</p>
+      <p>{{ stay.guestName }}, {{ prettyDate(stay.checkIn) }} to {{ prettyDate(stay.checkOut) }} is requested. Those nights are held until {{ listing.hostName }} approves or declines@if (stay.holdUntil) {, or until {{ prettyWhen(stay.holdUntil) }} }.</p>
       <a class="text-link" [routerLink]="stay.guestPath">Open the guest page</a>
     </section>
   }
@@ -159,7 +185,11 @@
     </article>
     <article class="panel">
       <h2>House rules</h2>
-      <p>{{ listing.houseRules }}</p>
+      <ul class="rules">
+        @for (rule of rules(listing.houseRules); track rule) {
+          <li>{{ rule }}</li>
+        }
+      </ul>
     </article>
     <article class="panel">
       <h2>Cancellation</h2>

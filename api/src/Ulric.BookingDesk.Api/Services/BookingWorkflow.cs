@@ -7,6 +7,7 @@ using Ulric.BookingDesk.Api.Data;
 using Ulric.BookingDesk.Api.Models;
 using Ulric.BookingDesk.Domain.Availability;
 using Ulric.BookingDesk.Domain.Invoicing;
+using Ulric.BookingDesk.Domain.Listings;
 using Ulric.BookingDesk.Domain.Payments;
 using Ulric.BookingDesk.Domain.Pricing;
 using Ulric.BookingDesk.Domain.Reminders;
@@ -18,6 +19,8 @@ public sealed class BookingWorkflow(
     DeskDb db,
     IDeskClock clock,
     IOptions<DeskOptions> options,
+    IOptions<PaymentOptions> payments,
+    IOptions<DeskHostOptions> host,
     StoragePaths storage,
     SignatureRenderer signatures,
     ContractPdfBuilder pdfs,
@@ -58,11 +61,11 @@ public sealed class BookingWorkflow(
         property.LocationLabel = ListingCopy.Place;
         property.Latitude = 0;
         property.Longitude = 0;
-        property.ContactEmail = update.ContactEmail.Trim();
-        property.ContactPhone = update.ContactPhone.Trim();
+        property.ContactEmail = HostEmail;
+        property.ContactPhone = HostPhone;
         property.NightlyRate = PricingCalculator.Round(update.NightlyRate);
         property.CleaningFee = PricingCalculator.Round(update.CleaningFee);
-        property.ServiceFee = PricingCalculator.Round(update.ServiceFee);
+        property.ServiceFee = 0;
         property.DepositPercent = PricingCalculator.Round(update.DepositPercent);
         property.MinNights = update.MinNights;
         property.MaxGuests = update.MaxGuests;
@@ -71,8 +74,8 @@ public sealed class BookingWorkflow(
         property.CheckInTime = update.CheckInTime.Trim();
         property.CheckOutTime = update.CheckOutTime.Trim();
         property.CheckInInstructions = update.CheckInInstructions.Trim();
-        property.PaypalHandle = update.PaypalHandle.Trim();
-        property.VenmoHandle = update.VenmoHandle.Trim();
+        property.PaypalHandle = PayPalHandle;
+        property.VenmoHandle = VenmoHandle;
         property.HostSignatureName = update.HostSignatureName.Trim();
         await db.SaveChangesAsync(cancellationToken);
         return await MappedAsync(property, cancellationToken);
@@ -98,6 +101,7 @@ public sealed class BookingWorkflow(
 
     public async Task<IReadOnlyList<DayMarkDto>> AvailabilityAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken, string? slug = null)
     {
+        await ExpireRequestsAsync(cancellationToken);
         if (to < from)
         {
             throw new DeskException(400, "The end date has to be on or after the start date.");
@@ -124,12 +128,7 @@ public sealed class BookingWorkflow(
         var occupancy = stays.Select(stay => new LinkedStay(
             stay.CheckIn,
             stay.CheckOut,
-            stay.Status switch
-            {
-                BookingStatus.Approved => Occupancy.Booked,
-                BookingStatus.Requested => Occupancy.Held,
-                _ => Occupancy.Open
-            },
+            OccupancyOf(stay.Status),
             labels.TryGetValue(stay.PropertyId, out var label) ? label : "another stay",
             stay.PropertyId == property.Id)).ToList();
 
@@ -152,6 +151,7 @@ public sealed class BookingWorkflow(
 
     public async Task<BookingDetailDto> CreateRequestAsync(CreateBookingRequest request, string? ip, CancellationToken cancellationToken)
     {
+        await ExpireRequestsAsync(cancellationToken);
         var property = await PropertyAsync(cancellationToken, request.PropertySlug);
         var name = (request.GuestName ?? "").Trim();
         var email = (request.GuestEmail ?? "").Trim();
@@ -166,6 +166,11 @@ public sealed class BookingWorkflow(
         if (!IsEmail(email))
         {
             throw new DeskException(400, "Enter a valid email address.");
+        }
+
+        if (phone.Length < 7)
+        {
+            throw new DeskException(400, "Enter a phone number.");
         }
 
         if (request.Guests < 1 || request.Guests > property.MaxGuests)
@@ -186,7 +191,7 @@ public sealed class BookingWorkflow(
                 request.CheckOut,
                 property.NightlyRate,
                 property.CleaningFee,
-                property.ServiceFee,
+                0,
                 property.DepositPercent);
         }
         catch (ArgumentException ex)
@@ -236,12 +241,18 @@ public sealed class BookingWorkflow(
         };
 
         db.Bookings.Add(booking);
+        var link = GuestLink(booking.GuestToken);
+        LogCopy(
+            email,
+            $"Request for {property.Name}",
+            $"{name} requested {property.Name}, {booking.CheckIn:yyyy-MM-dd} to {booking.CheckOut:yyyy-MM-dd}. {quote.Nights} nights, total {quote.Total:0.00} {property.Currency}. Guest page: {link} Logged only. This was not sent.");
         await db.SaveChangesAsync(cancellationToken);
         return await DetailAsync(booking.Id, includeReminders: false, cancellationToken);
     }
 
     public async Task<IReadOnlyList<BookingSummaryDto>> ListAsync(string? status, CancellationToken cancellationToken)
     {
+        await ExpireRequestsAsync(cancellationToken);
         var today = clock.Today(options.Value.TimeZone);
         var query = db.Bookings
             .Include(booking => booking.Property)
@@ -261,11 +272,15 @@ public sealed class BookingWorkflow(
             .ToList();
     }
 
-    public Task<BookingDetailDto> GetAsync(Guid id, CancellationToken cancellationToken) =>
-        DetailAsync(id, includeReminders: true, cancellationToken);
+    public async Task<BookingDetailDto> GetAsync(Guid id, CancellationToken cancellationToken)
+    {
+        await ExpireRequestsAsync(cancellationToken);
+        return await DetailAsync(id, includeReminders: true, cancellationToken);
+    }
 
     public async Task<BookingDetailDto> GetByTokenAsync(string token, CancellationToken cancellationToken)
     {
+        await ExpireRequestsAsync(cancellationToken);
         var id = await db.Bookings
             .Where(booking => booking.GuestToken == token)
             .Select(booking => booking.Id)
@@ -280,6 +295,7 @@ public sealed class BookingWorkflow(
 
     public async Task<BookingDetailDto> ApproveAsync(Guid id, CancellationToken cancellationToken)
     {
+        await ExpireRequestsAsync(cancellationToken);
         var booking = await LoadAsync(id, cancellationToken);
         if (booking.Status != BookingStatus.Requested)
         {
@@ -287,7 +303,7 @@ public sealed class BookingWorkflow(
         }
 
         var property = await PropertyForAsync(booking, cancellationToken);
-        var conflict = await ConflictLabelAsync(property, booking.CheckIn, booking.CheckOut, booking.Id, cancellationToken, approvedOnly: true);
+        var conflict = await ConflictLabelAsync(property, booking.CheckIn, booking.CheckOut, booking.Id, cancellationToken);
         if (conflict is not null)
         {
             throw new DeskException(409, ConflictMessage(conflict));
@@ -316,12 +332,18 @@ public sealed class BookingWorkflow(
         booking.Invoice = invoice;
         booking.Reminders = reminders;
         await WriteContractPdfAsync(booking, contract, property, cancellationToken);
+        var payLine = PayInstruction(property.Name, invoice.Number, booking.DepositAmount > 0 ? booking.DepositAmount : booking.Total, booking.DepositAmount > 0);
+        LogCopy(
+            booking.GuestEmail,
+            $"Approved: {property.Name}",
+            $"{property.HostName} approved {property.Name}, {booking.CheckIn:yyyy-MM-dd} to {booking.CheckOut:yyyy-MM-dd}. Total {booking.Total:0.00} {property.Currency}. {payLine} Guest page: {GuestLink(booking.GuestToken)} Logged only. This was not sent.");
         await db.SaveChangesAsync(cancellationToken);
         return await DetailAsync(booking.Id, includeReminders: true, cancellationToken);
     }
 
     public async Task<BookingDetailDto> DeclineAsync(Guid id, CancellationToken cancellationToken)
     {
+        await ExpireRequestsAsync(cancellationToken);
         var booking = await LoadAsync(id, cancellationToken);
         if (booking.Status != BookingStatus.Requested)
         {
@@ -330,14 +352,20 @@ public sealed class BookingWorkflow(
 
         booking.Status = BookingStatus.Declined;
         booking.DecidedAt = clock.UtcNow;
+        var property = await PropertyForAsync(booking, cancellationToken);
+        LogCopy(
+            booking.GuestEmail,
+            $"Declined: {property.Name}",
+            $"The request for {property.Name}, {booking.CheckIn:yyyy-MM-dd} to {booking.CheckOut:yyyy-MM-dd}, was declined. The hold is released. Logged only. This was not sent.");
         await db.SaveChangesAsync(cancellationToken);
         return await DetailAsync(booking.Id, includeReminders: true, cancellationToken);
     }
 
     public async Task<BookingDetailDto> CancelAsync(Guid id, CancellationToken cancellationToken)
     {
+        await ExpireRequestsAsync(cancellationToken);
         var booking = await LoadAsync(id, cancellationToken);
-        if (booking.Status is not (BookingStatus.Requested or BookingStatus.Approved))
+        if (booking.Status is not (BookingStatus.Requested or BookingStatus.Approved or BookingStatus.Confirmed))
         {
             throw new DeskException(409, "That stay is already closed.");
         }
@@ -355,6 +383,7 @@ public sealed class BookingWorkflow(
 
     public async Task<BookingDetailDto> SignAsync(string token, SignRequest request, string? ip, CancellationToken cancellationToken)
     {
+        await ExpireRequestsAsync(cancellationToken);
         var booking = await db.Bookings
             .Include(item => item.Contract)
             .Include(item => item.Invoice!).ThenInclude(invoice => invoice.Payments)
@@ -362,7 +391,7 @@ public sealed class BookingWorkflow(
             .FirstOrDefaultAsync(item => item.GuestToken == token, cancellationToken)
             ?? throw new DeskException(404, "That stay link is not on the desk.");
 
-        if (booking.Status != BookingStatus.Approved || booking.Contract is null)
+        if (booking.Status is not (BookingStatus.Approved or BookingStatus.Confirmed) || booking.Contract is null)
         {
             throw new DeskException(409, "The contract is ready after the host approves the request.");
         }
@@ -442,6 +471,7 @@ public sealed class BookingWorkflow(
 
     public async Task<BookingDetailDto> AddPaymentAsync(Guid invoiceId, PaymentRequest request, CancellationToken cancellationToken)
     {
+        await ExpireRequestsAsync(cancellationToken);
         var invoice = await db.Invoices
             .Include(item => item.Payments)
             .Include(item => item.Booking)
@@ -473,6 +503,11 @@ public sealed class BookingWorkflow(
         }
 
         var method = PaymentMethods.First(item => item.Equals(request.Method, StringComparison.OrdinalIgnoreCase));
+        if (PricingCalculator.Round(remaining - amount) <= 0)
+        {
+            booking.Status = BookingStatus.Confirmed;
+        }
+
         db.Payments.Add(new Payment
         {
             Id = Guid.NewGuid(),
@@ -489,6 +524,7 @@ public sealed class BookingWorkflow(
 
     public async Task<DashboardDto> DashboardAsync(CancellationToken cancellationToken)
     {
+        await ExpireRequestsAsync(cancellationToken);
         var today = clock.Today(options.Value.TimeZone);
         var bookings = await db.Bookings
             .Include(booking => booking.Property)
@@ -497,7 +533,7 @@ public sealed class BookingWorkflow(
             .ToListAsync(cancellationToken);
 
         var openRequests = bookings.Count(booking => booking.Status == BookingStatus.Requested);
-        var upcomingStays = bookings.Count(booking => booking.Status == BookingStatus.Approved && booking.CheckOut >= today);
+        var upcomingStays = bookings.Count(booking => (booking.Status is BookingStatus.Approved or BookingStatus.Confirmed) && booking.CheckOut >= today);
         var monthStart = new DateOnly(today.Year, today.Month, 1);
         var collected = bookings
             .SelectMany(booking => booking.Invoice?.Payments ?? [])
@@ -531,7 +567,7 @@ public sealed class BookingWorkflow(
         }
 
         var upcoming = bookings
-            .Where(booking => booking.Status == BookingStatus.Approved && booking.CheckOut >= today)
+            .Where(booking => (booking.Status is BookingStatus.Approved or BookingStatus.Confirmed) && booking.CheckOut >= today)
             .OrderBy(booking => booking.CheckIn)
             .Take(6)
             .Select(booking => MapSummary(booking, today))
@@ -609,7 +645,7 @@ public sealed class BookingWorkflow(
                     Method = payMethod,
                     Amount = amount,
                     PaidOn = paidOn,
-                    Reference = reference,
+                    Reference = string.IsNullOrWhiteSpace(reference) ? invoice.Number : reference,
                     RecordedAt = new DateTimeOffset(paidOn.ToDateTime(new TimeOnly(16, 0)), TimeSpan.Zero)
                 });
             }
@@ -676,7 +712,7 @@ public sealed class BookingWorkflow(
         var today = clock.Today(options.Value.TimeZone);
         var paid = Paid(booking);
         var status = StatusOf(booking, paid, today) ?? InvoicePaymentStatus.Unpaid;
-        var bytes = invoices.Build(booking, property, status, paid);
+        var bytes = invoices.Build(booking, property, status, paid, PayPalHandle, VenmoHandle);
         return (bytes, $"{booking.Invoice.Number}.pdf");
     }
 
@@ -703,12 +739,7 @@ public sealed class BookingWorkflow(
         var occupancy = stays.Select(stay => new LinkedStay(
             stay.CheckIn,
             stay.CheckOut,
-            stay.Status switch
-            {
-                BookingStatus.Approved => Occupancy.Booked,
-                BookingStatus.Requested when !approvedOnly => Occupancy.Held,
-                _ => Occupancy.Open
-            },
+            OccupancyOf(stay.Status),
             labels.TryGetValue(stay.PropertyId, out var label) ? label : "another stay",
             stay.PropertyId == property.Id));
 
@@ -727,7 +758,7 @@ public sealed class BookingWorkflow(
         Status = ContractStatus.Unsigned,
         PropertyName = property.Name,
         HostName = property.HostName,
-        HouseRules = property.HouseRules,
+        HouseRules = HouseRulesText.Joined(property.HouseRules),
         CancellationPolicy = property.CancellationPolicy,
         CreatedAt = createdAt
     };
@@ -765,9 +796,23 @@ public sealed class BookingWorkflow(
 
     private async Task<string> NextInvoiceNumberAsync(Property property, CancellationToken cancellationToken)
     {
-        var prefix = string.IsNullOrWhiteSpace(property.InvoicePrefix) ? "UL" : property.InvoicePrefix.Trim().ToUpperInvariant();
-        var count = await db.Invoices.CountAsync(invoice => invoice.Number.StartsWith(prefix + "-"), cancellationToken);
-        return $"{prefix}-{count + 1001:0000}";
+        _ = property;
+        var year = clock.Today(options.Value.TimeZone).Year;
+        var prefix = $"UB-{year}-";
+        var numbers = await db.Invoices
+            .Where(invoice => invoice.Number.StartsWith(prefix))
+            .Select(invoice => invoice.Number)
+            .ToListAsync(cancellationToken);
+        var max = 0;
+        foreach (var number in numbers)
+        {
+            if (number.Length > prefix.Length && int.TryParse(number[prefix.Length..], out var value) && value > max)
+            {
+                max = value;
+            }
+        }
+
+        return $"{prefix}{max + 1:0000}";
     }
 
     private async Task<Booking> LoadAsync(Guid id, CancellationToken cancellationToken) =>
@@ -814,7 +859,7 @@ public sealed class BookingWorkflow(
         PriceQuote quote;
         try
         {
-            quote = PricingCalculator.Quote(checkIn, checkOut, property.NightlyRate, property.CleaningFee, property.ServiceFee, property.DepositPercent);
+            quote = PricingCalculator.Quote(checkIn, checkOut, property.NightlyRate, property.CleaningFee, 0, property.DepositPercent);
         }
         catch (ArgumentException ex)
         {
@@ -847,7 +892,7 @@ public sealed class BookingWorkflow(
         return MapProperty(property, rows);
     }
 
-    private static PropertyDto MapProperty(Property property, IReadOnlyList<Property> peers)
+    private PropertyDto MapProperty(Property property, IReadOnlyList<Property> peers)
     {
         var contains = LinkMap(peers.Select(item => (item.Slug, item.ContainsJson)));
         var linked = UnitLinks.LinkedWith(property.Slug, contains);
@@ -864,21 +909,21 @@ public sealed class BookingWorkflow(
             property.Tagline,
             property.Description,
             ListingCopy.Place,
-            property.ContactEmail,
-            property.ContactPhone,
+            HostEmail,
+            HostPhone,
             property.NightlyRate,
             property.CleaningFee,
             property.ServiceFee,
             property.DepositPercent,
             property.MinNights,
             property.MaxGuests,
-            property.HouseRules,
+            HouseRulesText.Joined(property.HouseRules),
             property.CancellationPolicy,
             property.CheckInTime,
             property.CheckOutTime,
             property.CheckInInstructions,
-            property.PaypalHandle,
-            property.VenmoHandle,
+            PayPalHandle,
+            VenmoHandle,
             property.HostSignatureName,
             !string.IsNullOrWhiteSpace(property.HostSignaturePath),
             property.Currency,
@@ -925,7 +970,7 @@ public sealed class BookingWorkflow(
             throw new DeskException(400, "The listing and the host need names.");
         }
 
-        if (update.NightlyRate < 0 || update.CleaningFee < 0 || update.ServiceFee < 0)
+        if (update.NightlyRate < 0 || update.CleaningFee < 0)
         {
             throw new DeskException(400, "Rates and fees cannot be negative.");
         }
@@ -938,16 +983,6 @@ public sealed class BookingWorkflow(
         if (update.MinNights < 1 || update.MaxGuests < 1)
         {
             throw new DeskException(400, "Minimum nights and maximum guests start at 1.");
-        }
-
-        try
-        {
-            PaymentLinks.RequireHandle(update.PaypalHandle ?? "");
-            PaymentLinks.RequireHandle(update.VenmoHandle ?? "");
-        }
-        catch (ArgumentException ex)
-        {
-            throw new DeskException(400, ex.Message);
         }
     }
 
@@ -1034,10 +1069,14 @@ public sealed class BookingWorkflow(
                         reminder.Recipient,
                         reminder.Subject))
                     .ToList()
-                : []);
+                : [],
+            booking.Status == BookingStatus.Requested && options.Value.RequestExpiryHours >= 0
+                ? booking.CreatedAt.AddHours(options.Value.RequestExpiryHours)
+                : null,
+            HostPhone);
     }
 
-    private static InvoiceDto MapInvoice(Booking booking, Property property, decimal paid, InvoicePaymentStatus? status)
+    private InvoiceDto MapInvoice(Booking booking, Property property, decimal paid, InvoicePaymentStatus? status)
     {
         var invoice = booking.Invoice!;
         var remaining = PricingCalculator.Round(Math.Max(0, booking.Total - paid));
@@ -1060,10 +1099,132 @@ public sealed class BookingWorkflow(
                 .OrderBy(payment => payment.PaidOn)
                 .Select(payment => new PaymentDto(payment.Id, payment.Method, payment.Amount, payment.PaidOn, payment.Reference))
                 .ToList(),
-            remaining > 0 ? PaymentLinks.PayPal(property.PaypalHandle, remaining) : null,
-            remaining > 0 ? PaymentLinks.Venmo(property.VenmoHandle, remaining, noteBase) : null,
-            depositRemaining > 0 ? PaymentLinks.PayPal(property.PaypalHandle, depositRemaining) : null,
-            depositRemaining > 0 ? PaymentLinks.Venmo(property.VenmoHandle, depositRemaining, $"{noteBase} deposit") : null);
+            PayLink(false, remaining, noteBase),
+            PayLink(true, remaining, noteBase),
+            PayLink(false, depositRemaining, $"{noteBase} deposit"),
+            PayLink(true, depositRemaining, $"{noteBase} deposit"));
+    }
+
+    public async Task ExpireRequestsAsync(CancellationToken cancellationToken)
+    {
+        var hours = options.Value.RequestExpiryHours;
+        if (hours < 0)
+        {
+            return;
+        }
+
+        var now = clock.UtcNow;
+        var requested = await db.Bookings
+            .Include(booking => booking.Property)
+            .Where(booking => booking.Status == BookingStatus.Requested)
+            .ToListAsync(cancellationToken);
+        var due = requested.Where(booking => RequestExpiry.IsDue(booking.CreatedAt, now, hours)).ToList();
+        if (due.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var booking in due)
+        {
+            booking.Status = BookingStatus.Expired;
+            booking.DecidedAt = now;
+            var name = booking.Property?.Name ?? "the stay";
+            LogCopy(
+                booking.GuestEmail,
+                $"Request expired for {name}",
+                $"The request for {name}, {booking.CheckIn:yyyy-MM-dd} to {booking.CheckOut:yyyy-MM-dd}, expired. The hold is released. Logged only. This was not sent.");
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private string PayPalHandle => (payments.Value.PayPalHandle ?? "").Trim();
+
+    private string VenmoHandle => (payments.Value.VenmoHandle ?? "").Trim();
+
+    private string HostPhone => (host.Value.Phone ?? "").Trim();
+
+    private string HostEmail => (host.Value.Email ?? "").Trim();
+
+    private static Occupancy OccupancyOf(BookingStatus status) => status switch
+    {
+        BookingStatus.Confirmed => Occupancy.Booked,
+        BookingStatus.Approved or BookingStatus.Requested => Occupancy.Held,
+        _ => Occupancy.Open
+    };
+
+    private string GuestLink(string token) =>
+        PublicUrl.Combine(options.Value.PublicBaseUrl, $"/stay/{token}") ?? $"/stay/{token}";
+
+    private void LogCopy(string recipient, string subject, string body)
+    {
+        db.Outbox.Add(new OutboxMessage
+        {
+            Id = Guid.NewGuid(),
+            ReminderId = Guid.Empty,
+            Channel = "Email",
+            Recipient = string.IsNullOrWhiteSpace(recipient) ? HostEmail : recipient,
+            Subject = subject,
+            Body = body,
+            LoggedAt = clock.UtcNow
+        });
+    }
+
+    private string? PayLink(bool venmo, decimal amount, string note)
+    {
+        if (amount <= 0)
+        {
+            return null;
+        }
+
+        var handle = venmo ? VenmoHandle : PayPalHandle;
+        if (!IsHandle(handle))
+        {
+            return null;
+        }
+
+        return venmo ? PaymentLinks.Venmo(handle, amount, note) : PaymentLinks.PayPal(handle, amount);
+    }
+
+    private string PayInstruction(string propertyName, string invoiceNumber, decimal amount, bool deposit)
+    {
+        var paypal = PayLink(false, amount, deposit ? $"{propertyName} {invoiceNumber} deposit" : $"{propertyName} {invoiceNumber}");
+        var venmo = PayLink(true, amount, deposit ? $"{propertyName} {invoiceNumber} deposit" : $"{propertyName} {invoiceNumber}");
+        if (paypal is null && venmo is null)
+        {
+            return "PayPal or Venmo, details after approval.";
+        }
+
+        var parts = new List<string>();
+        if (paypal is not null)
+        {
+            parts.Add($"PayPal: {paypal}");
+        }
+
+        if (venmo is not null)
+        {
+            parts.Add($"Venmo: {venmo}");
+        }
+
+        return string.Join(" ", parts);
+    }
+
+    private static bool IsHandle(string handle)
+    {
+        if (string.IsNullOrWhiteSpace(handle))
+        {
+            return false;
+        }
+
+        try
+        {
+            PaymentLinks.RequireHandle(handle);
+            return true;
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
     }
 
     private static string RelativeAsset(string path) =>

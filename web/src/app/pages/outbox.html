@@ -1,6 +1,6 @@
 <p class="eyebrow">Host desk</p>
 <h1>Outbox</h1>
-<p class="lede">Reminders are logged here. The desk does not send email or SMS.</p>
+<p class="lede">Messages are logged here for you to copy. The desk does not send email or SMS.</p>
 
 @if (loading()) {
   <div class="skeleton block"></div>
@@ -20,6 +20,7 @@
         <h2>{{ message.subject }}</h2>
         <p class="quiet">{{ message.recipient }}</p>
         <p>{{ message.body }}</p>
+        <button class="ghost" type="button" (click)="copy(message)">{{ copied() === message.id ? 'Copied' : 'Copy' }}</button>
       </li>
     }
   </ul>

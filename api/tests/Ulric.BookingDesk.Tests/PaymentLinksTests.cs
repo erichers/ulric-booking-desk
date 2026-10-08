@@ -8,11 +8,11 @@ public class PaymentLinksTests
     [Fact]
     public void PayPal_and_Venmo_links_use_the_demo_handle_and_amount()
     {
-        var paypal = PaymentLinks.PayPal("ulric-demo", 268.5m);
-        var venmo = PaymentLinks.Venmo("ulric-demo", 268.5m, "Juniper Cottage deposit");
+        var paypal = PaymentLinks.PayPal("hayward-desk", 268.5m);
+        var venmo = PaymentLinks.Venmo("hayward-desk", 268.5m, "Cottage deposit");
 
-        Assert.Equal("https://paypal.me/ulric-demo/268.50", paypal);
-        Assert.Equal("https://venmo.com/ulric-demo?txn=pay&amount=268.50&note=Juniper%20Cottage%20deposit", venmo);
+        Assert.Equal("https://paypal.me/hayward-desk/268.50", paypal);
+        Assert.Equal("https://venmo.com/hayward-desk?txn=pay&amount=268.50&note=Cottage%20deposit", venmo);
     }
 
     [Theory]

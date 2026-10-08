@@ -18,7 +18,24 @@
   @if (stay.status === 'Requested') {
     <section class="panel">
       <h2>Waiting on the host</h2>
-      <p>These dates are held. The contract and invoice appear here after the request is approved.</p>
+      <p>These nights are held. Total {{ money(stay.total) }}. PayPal or Venmo, details after approval.@if (stay.holdUntil) { The hold ends {{ prettyWhen(stay.holdUntil) }} if the request is still open. }</p>
+    </section>
+  }
+
+  @if (stay.status === 'Approved') {
+    <section class="panel">
+      <h2>Approved, awaiting payment</h2>
+      <p>Total {{ money(stay.total) }}.@if (stay.depositAmount) { Deposit {{ money(stay.depositAmount) }} is due after approval. } The nights stay held until the host marks the invoice paid.</p>
+      @if (stay.hostPhone) {
+        <p>Host phone {{ stay.hostPhone }}</p>
+      }
+    </section>
+  }
+
+  @if (stay.status === 'Confirmed') {
+    <section class="panel">
+      <h2>Confirmed</h2>
+      <p>This stay is paid. The nights are confirmed.</p>
     </section>
   }
 
@@ -26,6 +43,13 @@
     <section class="panel">
       <h2>Declined</h2>
       <p>The host declined this request. The dates are open again.</p>
+    </section>
+  }
+
+  @if (stay.status === 'Expired') {
+    <section class="panel">
+      <h2>Expired</h2>
+      <p>The request expired before it was approved. The hold is released.</p>
     </section>
   }
 
@@ -110,27 +134,39 @@
       }
 
       @if (invoice.amountDue > 0) {
-        <div class="pay-grid">
-          @if (invoice.payPalDepositUrl) {
-            <article>
-              <h3>Pay the deposit {{ money(invoice.depositRemaining) }}</h3>
-              <a class="text-link" [href]="invoice.payPalDepositUrl" target="_blank" rel="noreferrer">PayPal</a>
-              @if (invoice.venmoDepositUrl) {
-                <a class="text-link" [href]="invoice.venmoDepositUrl" target="_blank" rel="noreferrer">Venmo</a>
-              }
-              <app-qr [value]="invoice.payPalDepositUrl" label="PayPal deposit QR code" />
-            </article>
-          }
-          <article>
-            <h3>Pay the balance {{ money(invoice.amountDue) }}</h3>
-            <a class="text-link" [href]="invoice.payPalUrl" target="_blank" rel="noreferrer">PayPal</a>
-            <a class="text-link" [href]="invoice.venmoUrl" target="_blank" rel="noreferrer">Venmo</a>
-            @if (invoice.payPalUrl) {
-              <app-qr [value]="invoice.payPalUrl" label="PayPal balance QR code" />
+        @if (invoice.payPalUrl || invoice.venmoUrl || invoice.payPalDepositUrl || invoice.venmoDepositUrl) {
+          <div class="pay-grid">
+            @if (invoice.payPalDepositUrl || invoice.venmoDepositUrl) {
+              <article>
+                <h3>Pay the deposit {{ money(invoice.depositRemaining) }}</h3>
+                @if (invoice.payPalDepositUrl) {
+                  <a class="text-link" [href]="invoice.payPalDepositUrl" target="_blank" rel="noreferrer">PayPal</a>
+                }
+                @if (invoice.venmoDepositUrl) {
+                  <a class="text-link" [href]="invoice.venmoDepositUrl" target="_blank" rel="noreferrer">Venmo</a>
+                }
+                @if (invoice.payPalDepositUrl) {
+                  <app-qr [value]="invoice.payPalDepositUrl" label="PayPal deposit QR code" />
+                }
+              </article>
             }
-          </article>
-        </div>
-        <p class="quiet">Links use the demo handle ulric-demo. The host marks the invoice paid after the transfer.</p>
+            <article>
+              <h3>Pay {{ money(invoice.amountDue) }}</h3>
+              @if (invoice.payPalUrl) {
+                <a class="text-link" [href]="invoice.payPalUrl" target="_blank" rel="noreferrer">PayPal</a>
+              }
+              @if (invoice.venmoUrl) {
+                <a class="text-link" [href]="invoice.venmoUrl" target="_blank" rel="noreferrer">Venmo</a>
+              }
+              @if (invoice.payPalUrl) {
+                <app-qr [value]="invoice.payPalUrl" label="PayPal QR code" />
+              }
+            </article>
+          </div>
+          <p class="quiet">The host marks the invoice paid after the transfer. There is no Airbnb service fee.</p>
+        } @else {
+          <p>PayPal or Venmo, details after approval.</p>
+        }
       }
     </section>
   }

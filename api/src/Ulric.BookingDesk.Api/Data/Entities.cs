@@ -7,7 +7,9 @@ public enum BookingStatus
     Requested,
     Approved,
     Declined,
-    Cancelled
+    Cancelled,
+    Confirmed,
+    Expired
 }
 
 public enum ContractStatus
@@ -46,8 +48,8 @@ public class Property
     public string CheckInTime { get; set; } = "16:00";
     public string CheckOutTime { get; set; } = "11:00";
     public string CheckInInstructions { get; set; } = "";
-    public string PaypalHandle { get; set; } = "ulric-demo";
-    public string VenmoHandle { get; set; } = "ulric-demo";
+    public string PaypalHandle { get; set; } = "";
+    public string VenmoHandle { get; set; } = "";
     public string HostSignatureName { get; set; } = "";
     public string? HostSignaturePath { get; set; }
     public string Currency { get; set; } = "USD";

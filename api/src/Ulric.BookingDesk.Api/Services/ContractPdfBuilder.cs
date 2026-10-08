@@ -61,7 +61,10 @@ public sealed class ContractPdfBuilder
                     });
 
                     column.Item().PaddingTop(12).Text("House rules").FontSize(14);
-                    column.Item().Text(contract.HouseRules);
+                    foreach (var rule in contract.HouseRules.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                    {
+                        column.Item().Text(rule);
+                    }
                     column.Item().PaddingTop(8).Text("Cancellation").FontSize(14);
                     column.Item().Text(contract.CancellationPolicy);
 

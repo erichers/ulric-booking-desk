@@ -16,7 +16,7 @@ export class Bookings {
   readonly prettyDate = prettyDate;
   readonly chip = chip;
   readonly label = label;
-  readonly filters = ['', 'Requested', 'Approved', 'Declined', 'Cancelled'];
+  readonly filters = ['', 'Requested', 'Approved', 'Confirmed', 'Declined', 'Expired', 'Cancelled'];
   readonly filter = signal('');
   readonly loading = signal(true);
   readonly rows = signal<BookingSummary[]>([]);

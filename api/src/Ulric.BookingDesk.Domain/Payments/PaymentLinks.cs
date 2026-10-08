@@ -24,7 +24,7 @@ public static partial class PaymentLinks
     {
         if (string.IsNullOrWhiteSpace(handle) || !HandlePattern().IsMatch(handle))
         {
-            throw new ArgumentException("Use a demo payment handle such as ulric-demo.");
+            throw new ArgumentException("Enter a payment handle using letters, numbers, dots, underscores, or hyphens.");
         }
 
         return handle;

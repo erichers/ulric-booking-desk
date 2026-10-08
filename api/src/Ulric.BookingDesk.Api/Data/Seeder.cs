@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Ulric.BookingDesk.Api.Models;
 using Ulric.BookingDesk.Api.Services;
+using Ulric.BookingDesk.Domain.Listings;
 using Ulric.BookingDesk.Domain.Pricing;
 using Ulric.BookingDesk.Domain.Scheduling;
 
@@ -21,11 +22,34 @@ public static class Seeder
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    public static async Task SeedAsync(BookingWorkflow workflow, DeskDb db, IDeskClock clock, string contentRoot, CancellationToken cancellationToken)
+    public static async Task SeedAsync(
+        BookingWorkflow workflow,
+        DeskDb db,
+        IDeskClock clock,
+        string contentRoot,
+        DeskOptions desk,
+        PaymentOptions payments,
+        DeskHostOptions host,
+        CancellationToken cancellationToken)
     {
+        var config = new HostConfig(
+            (host.Email ?? "").Trim(),
+            (host.Phone ?? "").Trim(),
+            (payments.PayPalHandle ?? "").Trim(),
+            (payments.VenmoHandle ?? "").Trim());
         var slugs = await db.Properties.Select(property => property.Slug).ToListAsync(cancellationToken);
         if (slugs.Count == ExpectedSlugs.Length && ExpectedSlugs.All(slugs.Contains))
         {
+            await ApplyHostConfigAsync(db, config, cancellationToken);
+            if (!desk.SeedSampleBookings)
+            {
+                await DeleteSampleBookingsAsync(db, cancellationToken);
+            }
+            else if (!await db.Bookings.AnyAsync(cancellationToken))
+            {
+                await SeedSampleStaysAsync(workflow, db, clock, cancellationToken);
+            }
+
             return;
         }
 
@@ -40,7 +64,7 @@ public static class Seeder
             await db.Properties.ExecuteDeleteAsync(cancellationToken);
         }
 
-        var properties = LoadListings(contentRoot);
+        var properties = LoadListings(contentRoot, config);
         db.Properties.AddRange(properties);
         await db.SaveChangesAsync(cancellationToken);
         foreach (var property in properties)
@@ -48,9 +72,17 @@ public static class Seeder
             await workflow.SaveHostSignatureAsync(property.HostSignatureName, cancellationToken, property.Slug);
         }
 
+        if (desk.SeedSampleBookings)
+        {
+            await SeedSampleStaysAsync(workflow, db, clock, cancellationToken);
+        }
+    }
+
+    private static async Task SeedSampleStaysAsync(BookingWorkflow workflow, DeskDb db, IDeskClock clock, CancellationToken cancellationToken)
+    {
         var today = clock.Today("America/Los_Angeles");
         var now = clock.UtcNow;
-        var bySlug = properties.ToDictionary(property => property.Slug);
+        var bySlug = await db.Properties.ToDictionaryAsync(property => property.Slug, cancellationToken);
         await SeedStays(workflow, db, bySlug["studio"], today, now, StudioStays(), cancellationToken);
         await SeedStays(workflow, db, bySlug["two-bed"], today, now, TwoBedStays(), cancellationToken);
         await SeedStays(workflow, db, bySlug["three-bed"], today, now, ThreeBedStays(), cancellationToken);
@@ -58,14 +90,59 @@ public static class Seeder
         await SeedStays(workflow, db, bySlug["cottage"], today, now, CottageStays(), cancellationToken);
     }
 
-    private static List<Property> LoadListings(string contentRoot)
+    private static async Task ApplyHostConfigAsync(DeskDb db, HostConfig config, CancellationToken cancellationToken)
+    {
+        var rows = await db.Properties.ToListAsync(cancellationToken);
+        foreach (var row in rows)
+        {
+            row.ContactEmail = config.Email;
+            row.ContactPhone = config.Phone;
+            row.PaypalHandle = config.PayPal;
+            row.VenmoHandle = config.Venmo;
+            row.ServiceFee = 0;
+            row.HouseRules = HouseRulesText.Joined(row.HouseRules);
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task DeleteSampleBookingsAsync(DeskDb db, CancellationToken cancellationToken)
+    {
+        var ids = await db.Bookings
+            .Where(booking => booking.GuestToken.StartsWith("seed"))
+            .Select(booking => booking.Id)
+            .ToListAsync(cancellationToken);
+        if (ids.Count == 0)
+        {
+            return;
+        }
+
+        var invoiceIds = await db.Invoices.Where(invoice => ids.Contains(invoice.BookingId)).Select(invoice => invoice.Id).ToListAsync(cancellationToken);
+        var reminderIds = await db.Reminders.Where(reminder => ids.Contains(reminder.BookingId)).Select(reminder => reminder.Id).ToListAsync(cancellationToken);
+        if (invoiceIds.Count > 0)
+        {
+            await db.Payments.Where(payment => invoiceIds.Contains(payment.InvoiceId)).ExecuteDeleteAsync(cancellationToken);
+        }
+
+        await db.Invoices.Where(invoice => ids.Contains(invoice.BookingId)).ExecuteDeleteAsync(cancellationToken);
+        if (reminderIds.Count > 0)
+        {
+            await db.Outbox.Where(message => reminderIds.Contains(message.ReminderId)).ExecuteDeleteAsync(cancellationToken);
+        }
+
+        await db.Reminders.Where(reminder => ids.Contains(reminder.BookingId)).ExecuteDeleteAsync(cancellationToken);
+        await db.Contracts.Where(contract => ids.Contains(contract.BookingId)).ExecuteDeleteAsync(cancellationToken);
+        await db.Bookings.Where(booking => ids.Contains(booking.Id)).ExecuteDeleteAsync(cancellationToken);
+    }
+
+    private static List<Property> LoadListings(string contentRoot, HostConfig config)
     {
         var directory = FindListings(contentRoot);
         return Directory.EnumerateFiles(directory, "*.json")
             .Select(path => JsonSerializer.Deserialize<ListingFile>(File.ReadAllText(path), ReadJson)
                 ?? throw new InvalidOperationException($"Could not read {path}."))
             .OrderBy(file => file.SortOrder)
-            .Select(ToProperty)
+            .Select(file => ToProperty(file, config))
             .ToList();
     }
 
@@ -89,7 +166,7 @@ public static class Seeder
         throw new InvalidOperationException("Listing files were not found.");
     }
 
-    private static Property ToProperty(ListingFile file) => new()
+    private static Property ToProperty(ListingFile file, HostConfig config) => new()
     {
         Id = Guid.NewGuid(),
         Slug = file.Slug,
@@ -102,8 +179,8 @@ public static class Seeder
         LocationLabel = ListingCopy.Place,
         Latitude = 0,
         Longitude = 0,
-        ContactEmail = "host@example.com",
-        ContactPhone = "",
+        ContactEmail = config.Email,
+        ContactPhone = config.Phone,
         NightlyRate = file.NightlyRate,
         CleaningFee = 0,
         ServiceFee = 0,
@@ -115,13 +192,13 @@ public static class Seeder
         InvoicePrefix = file.InvoicePrefix,
         HeroImage = file.Photos.FirstOrDefault()?.Src ?? "",
         GalleryJson = JsonSerializer.Serialize(file.Photos, WriteJson),
-        HouseRules = file.HouseRules,
+        HouseRules = HouseRulesText.Joined(file.HouseRules),
         CancellationPolicy = "Free cancellation. The full policy is on the Airbnb listing.",
         CheckInTime = file.CheckInTime,
         CheckOutTime = file.CheckOutTime,
         CheckInInstructions = file.CheckInInstructions,
-        PaypalHandle = "ulric-demo",
-        VenmoHandle = "ulric-demo",
+        PaypalHandle = config.PayPal,
+        VenmoHandle = config.Venmo,
         HostSignatureName = "Eric",
         Currency = "USD",
         UnitLabel = file.UnitLabel,
@@ -249,9 +326,14 @@ public static class Seeder
                     stay.PayKind,
                     stay.Method,
                     paidOn,
-                    $"DEMO-{property.InvoicePrefix}-{1000 + sequence}",
+                    "",
                     now,
                     cancellationToken);
+                if (stay.PayKind == PayKind.Full)
+                {
+                    booking.Status = BookingStatus.Confirmed;
+                }
+
                 await db.SaveChangesAsync(cancellationToken);
             }
 
@@ -285,6 +367,8 @@ public static class Seeder
         string Method,
         int ApprovedDaysAgo,
         string Notes);
+
+    private sealed record HostConfig(string Email, string Phone, string PayPal, string Venmo);
 
     private sealed class ListingFile
     {

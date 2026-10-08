@@ -15,9 +15,16 @@ export class Outbox {
   readonly loading = signal(true);
   readonly rows = signal<OutboxMessage[]>([]);
   readonly error = signal('');
+  readonly copied = signal('');
 
   constructor() {
     void this.load();
+  }
+
+  async copy(message: OutboxMessage): Promise<void> {
+    const text = `${message.subject}\n${message.recipient}\n\n${message.body}`;
+    await navigator.clipboard.writeText(text);
+    this.copied.set(message.id);
   }
 
   async load(): Promise<void> {

@@ -2,17 +2,18 @@
 
 ![Eric's stays near Hayward Field](docs/screenshots/home-light-desktop.png)
 
-Direct booking and invoicing for Eric's five stays in Eugene, OR, near Hayward Field. Guests request dates on a public page. The host approves the request, collects a signed agreement, tracks the invoice, and keeps reminders in an outbox. Each listing links to its Airbnb page. Nightly prices are shown as from rates. Demo guests are first names only.
+Direct booking and invoicing for Eric's five stays in Eugene, OR, near Hayward Field. Guests open `/book`, pick a stay and dates, and send a request. The host approves or declines. After approval the private guest page shows the total, a deposit when one is configured, PayPal and Venmo links, and the agreement to sign. Mark paid confirms the stay. Each listing links to its Airbnb page. Nightly prices are the listing from rates. Sample guests are off unless `Desk:SeedSampleBookings` is true.
 
-Payment links use the demo handle `ulric-demo`. This desk never charges a card. Nothing is emailed or texted.
+PayPal and Venmo handles, and the host phone and email, come from config (`Payments:PayPalHandle`, `Payments:VenmoHandle`, `Host:Phone`, `Host:Email`). The repo leaves them empty. Set the real values only on the machine that runs the desk. This desk never charges a card. Nothing is emailed or texted. The host copies messages from the outbox.
 
 ## Features
 
-- A public catalog of the five stays, each with Eric's listing photos, description, amenities, house rules, a month calendar, and a request form. Open, held, and booked days are marked. Dates held by a linked stay are hatched and labeled with that unit.
-- Host desk with open requests, upcoming bookings, a monthly revenue chart, and settings for each listing: rate, deposit percent, fees, house rules, and cancellation policy.
+- `/book` lists the five stays. `/book/:slug` opens one stay with Eric's photos, description, amenities, house rules as a list, a month calendar, and a request form. The total is nights times the nightly rate, plus a cleaning line only when that fee is already on the listing. There is no Airbnb service fee.
+- Open, held, and booked days are marked. A request and an approved stay are soft holds. A confirmed stay is a hard block. Dates held by a linked stay are hatched and labeled with that unit. Declined, cancelled, and expired requests release the nights. Requests expire after `Desk:RequestExpiryHours` (default 48).
+- Host desk with open requests, upcoming bookings, a monthly revenue chart, and settings for each listing: rate, deposit percent, cleaning fee, house rules, and cancellation policy. Payment handles are not edited here.
 - A contract PDF for each approved booking. The guest signs with a typed script or a drawn signature. The file stores the signature image, the time, and the IP address. The host signature is set in advance. Both sides can download the PDF.
-- An invoice per approved booking with line items, deposit, balance, and due dates. PayPal and Venmo links use `ulric-demo`, and each link has a QR code. The host can mark a payment with method, amount, date, and reference. Status chips show unpaid, partial, paid, and overdue.
-- A reminder schedule for the deposit, the balance, check-in instructions, and a review request. Email is always scheduled. SMS is scheduled when the guest left a phone number. A background service logs due reminders to the Outbox.
+- An invoice per approved booking, numbered `UB-YYYY-####`, with line items, a deposit when one is configured, balance, and due dates. PayPal and Venmo deep links use the configured handles (`paypal.me/<handle>/<amount>` and `venmo.com/<handle>?txn=pay&amount=<amount>&note=<ref>`). Each link has a QR code. The host marks a payment with method, amount, date, and reference. A paid-in-full invoice confirms the stay.
+- A reminder schedule for the deposit, the balance, check-in instructions, and a review request. Email is always scheduled. SMS is scheduled when the guest left a phone number. Request, approval, and expiry also write a row the host can copy. A background service logs due reminders to the Outbox. Nothing is sent.
 - Light and dark themes. The first visit follows the system preference. The header toggle stores the choice in `localStorage`.
 - Motion for routes, counts, the revenue chart, the request diagram, and the house model. Details are in the Motion section. `prefers-reduced-motion` keeps those changes instant.
 
@@ -63,6 +64,7 @@ Light desktop is the default. The same screens exist in dark mode and at phone w
 | Screen | Light | Dark |
 | --- | --- | --- |
 | Catalog | ![Catalog light](docs/screenshots/home-light-desktop.png) | ![Catalog dark](docs/screenshots/home-dark-desktop.png) |
+| Book | ![Book light](docs/screenshots/book-light-desktop.png) | ![Book dark](docs/screenshots/book-dark-desktop.png) |
 | Studio | ![Studio light](docs/screenshots/studio-light-desktop.png) | ![Studio dark](docs/screenshots/studio-dark-desktop.png) |
 | 2-bed | ![2-bed light](docs/screenshots/two-bed-light-desktop.png) | ![2-bed dark](docs/screenshots/two-bed-dark-desktop.png) |
 | 3-bed | ![3-bed light](docs/screenshots/three-bed-light-desktop.png) | ![3-bed dark](docs/screenshots/three-bed-dark-desktop.png) |
@@ -90,18 +92,18 @@ flowchart LR
   api --> files
 ```
 
-The domain project is pure logic: price quotes, date conflicts, invoice status, due dates, payment links, and the reminder schedule. The API stores listings, bookings, contracts, invoices, payments, reminders, and outbox rows. Approving a request snapshots the price, writes an unsigned agreement, opens an invoice, and schedules reminders. The default notification provider only writes a log line. The dispatcher then stores the same message on the Outbox screen.
+The domain project is pure logic: price quotes, date conflicts, request expiry, invoice status, due dates, payment links, house-rule lines, and the reminder schedule. The API stores listings, bookings, contracts, invoices, payments, reminders, and outbox rows. Approving a request snapshots the price, writes an unsigned agreement, opens an invoice, and schedules reminders. The default notification provider only writes a log line. The dispatcher then stores the same message on the Outbox screen.
 
-Held days are requests. Booked days are approved stays. Declined and cancelled stays do not block the calendar. The end date does not overlap the next arrival. The 4-bed, 3-bed, 2-bed, and studio share one house, so a stay on one of them can block the others. Booking the 4-bed blocks the 3-bed, the 2-bed, and the studio. Booking the 3-bed blocks the 4-bed and the 2-bed. Booking the 2-bed blocks the 3-bed and the 4-bed. Booking the studio blocks the 4-bed only. The garden cottage links to nothing. The overlap check runs on the server and is safe on MySQL 5.7. The public calendar hatches those nights and names the unit that holds them. The page shows Eugene, OR, near Hayward Field and does not store a street address or a map pin.
+Requested and approved nights are holds. Confirmed nights are booked. Declined, cancelled, and expired stays do not block the calendar. The end date does not overlap the next arrival. The 4-bed, 3-bed, 2-bed, and studio share one house, so a stay on one of them can block the others. Booking the 4-bed blocks the 3-bed, the 2-bed, and the studio. Booking the 3-bed blocks the 4-bed and the 2-bed. Booking the 2-bed blocks the 3-bed and the 4-bed. Booking the studio blocks the 4-bed only. The garden cottage links to nothing. The overlap check runs on the server and is safe on MySQL 5.7. The public calendar hatches those nights and names the unit that holds them. The page shows Eugene, OR, near Hayward Field and does not store a street address or a map pin.
 
 ## Data model
 
 | Table | Role |
 | --- | --- |
-| Properties | The five Eugene stays: titles, from rates, rules, photo captions, contains graph, Airbnb URL, demo payment handles, host signature |
-| Bookings | Fictional first-name guests, dates, snapshotted price, status, guest token |
+| Properties | The five Eugene stays: titles, from rates, rules, photo captions, contains graph, Airbnb URL, host signature. Payment handles and host contact are config, not columns the form edits |
+| Bookings | Dates, snapshotted price, status (`Requested`, `Approved`, `Confirmed`, `Declined`, `Cancelled`, `Expired`), guest token. Sample first-name rows only when `Desk:SeedSampleBookings` is true |
 | Contracts | Agreement text, signature image, signed time, IP, PDF path |
-| Invoices | Number (`ST-`, `TB-`, `TH-`, `FR-`, or `HC-`), issue date |
+| Invoices | Number (`UB-YYYY-####`), issue date |
 | Payments | Method, amount, date, reference |
 | Reminders | Kind, channel, schedule, pending or sent |
 | Outbox | Logged reminder text. Nothing is sent |
@@ -134,9 +136,9 @@ All routes are under `api/`. JSON uses string enums.
 | POST | `api/guest/{token}/sign` | Typed or drawn signature |
 | GET | `api/guest/{token}/contract.pdf` | Guest copy of the agreement |
 | GET | `api/guest/{token}/invoice.pdf` | Guest copy of the invoice |
-| POST | `api/invoices/{id}/payments` | Mark a payment |
+| POST | `api/invoices/{id}/payments` | Mark a payment. Paying the balance confirms the stay |
 | GET | `api/dashboard` | Counts, revenue, upcoming, requests |
-| GET | `api/outbox` | Logged reminders |
+| GET | `api/outbox` | Logged messages to copy. Nothing is sent |
 
 ## Run with Docker
 
@@ -232,7 +234,11 @@ Copy `.env.example` for local overrides. Checked-in `appsettings.json` keeps SQL
 | `Desk__ReminderIntervalSeconds` | How often due reminders are logged. Minimum 5 |
 | `Desk__TimeZone` | IANA zone for "today". Default `America/Los_Angeles` |
 | `Desk__PublicBaseUrl` | Public origin and sub-path, with no trailing slash required. Example `http://localhost:8888/grokbot/asp/ulric-booking-desk` |
-| `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD` | Compose only. Demo defaults are database `ulric` and password `ulric-demo` |
+| `Desk__RequestExpiryHours` | Hours before an open request expires and releases the hold. Default 48. Negative never expires |
+| `Desk__SeedSampleBookings` | `true` adds fictional first-name stays for tests and screenshots. Default `false`, so a live install has the five listings and no sample guests |
+| `Payments__PayPalHandle`, `Payments__VenmoHandle` | PayPal and Venmo handles. Empty in the repo. Set them only on the install |
+| `Host__Phone`, `Host__Email` | Host contact. Empty in the repo. Set them only on the install |
+| `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD` | Compose only. Sample defaults are database `ulric` and password `ulric-demo` |
 
 ## Tests
 
@@ -240,10 +246,10 @@ Copy `.env.example` for local overrides. Checked-in `appsettings.json` keeps SQL
 dotnet test api/Ulric.BookingDesk.sln
 ```
 
-xUnit covers pricing, availability conflicts, the house link graph, invoice status, reminder scheduling, payment links, public URL joining, and an API flow: seed, quote, conflict, approve, sign, PDF, partial payment, paid. Another flow checks that a studio request blocks the 4-bed, a 2-bed request blocks the 3-bed, the studio can still be booked beside the 2-bed, and the cottage can be booked on the studio's dates.
+xUnit covers pricing (nights times rate, no invented cleaning or service fee), availability conflicts, the house link graph, invoice status, request expiry, the status machine (request, approve, partial pay stays approved, full pay confirms, decline releases the hold), reminder scheduling, payment links, public URL joining, house-rule line breaks, and an API flow: seed, quote, conflict, approve, sign, PDF, partial payment, paid. Sample bookings are on for that flow and off in a separate host that expects an empty booking list. Another flow checks that a studio request blocks the 4-bed, a 2-bed request blocks the 3-bed, the studio can still be booked beside the 2-bed, and the cottage can be booked on the studio's dates.
 
 GitHub Actions runs `dotnet test` and `npm run build` on pull requests.
 
 ## Credits
 
-Photographs are Eric's own listing photos, resized to 1600px, in `web/public/photos/{airbnbId}/`. [CREDITS.md](CREDITS.md) records that credit. Demo bookings use fictional first names. No guest review text is stored.
+Photographs are Eric's own listing photos, resized to 1600px, in `web/public/photos/{airbnbId}/`. [CREDITS.md](CREDITS.md) records that credit. Optional sample bookings use fictional first names and `@example.com` addresses. No guest review text is stored.

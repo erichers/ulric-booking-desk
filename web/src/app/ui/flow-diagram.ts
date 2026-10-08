@@ -29,6 +29,6 @@ export class FlowDiagram {
     { title: 'Request', body: 'The guest picks open dates and sends a hold.' },
     { title: 'Approve', body: 'The host accepts. The desk writes the contract and the invoice.' },
     { title: 'Sign', body: 'The guest signs on the page. The file keeps the time and the IP.' },
-    { title: 'Pay', body: 'PayPal or Venmo uses ulric-demo. The host marks the invoice paid.' },
+    { title: 'Pay', body: 'After approval the guest pays with PayPal or Venmo. The host marks the stay paid, and the nights are confirmed.' },
   ];
 }

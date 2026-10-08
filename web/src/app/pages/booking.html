@@ -24,7 +24,7 @@
       <button class="primary" type="button" (click)="act('approve')" [disabled]="busy()">Approve</button>
       <button class="ghost" type="button" (click)="act('decline')" [disabled]="busy()">Decline</button>
     }
-    @if (stay.status === 'Approved' || stay.status === 'Requested') {
+    @if (stay.status === 'Approved' || stay.status === 'Requested' || stay.status === 'Confirmed') {
       <button class="ghost" type="button" (click)="act('cancel')" [disabled]="busy()">Cancel stay</button>
     }
     <button class="ghost" type="button" (click)="copyLink()">Copy guest link</button>
