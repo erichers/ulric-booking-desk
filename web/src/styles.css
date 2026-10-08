@@ -356,6 +356,21 @@ textarea { resize: vertical; }
 .pad { height: 160px; }
 .signature-preview { height: auto; background: #fff; }
 .pay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-top: 0.8rem; }
+.pay-links { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 0.7rem 0 0.4rem; }
+a.pay-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 7.5rem;
+  min-height: 2.5rem;
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--line);
+  background: var(--raised);
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 600;
+}
+a.pay-button:hover { color: var(--terracotta-deep); }
 .pay-grid.compact { grid-template-columns: 160px 160px; }
 .qr { width: 148px; height: 148px; }
 .plain, .rules { padding-left: 1.1rem; }

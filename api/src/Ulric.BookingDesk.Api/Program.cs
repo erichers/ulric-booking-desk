@@ -71,7 +71,8 @@ using (var scope = app.Services.CreateScope())
     var desk = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<DeskOptions>>().Value;
     var payments = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<PaymentOptions>>().Value;
     var host = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<DeskHostOptions>>().Value;
-    await Seeder.SeedAsync(workflow, db, clock, app.Environment.ContentRootPath, desk, payments, host, CancellationToken.None);
+    var storage = scope.ServiceProvider.GetRequiredService<StoragePaths>();
+    await Seeder.SeedAsync(workflow, db, clock, app.Environment.ContentRootPath, desk, payments, host, storage.Root, CancellationToken.None);
 }
 
 app.UseExceptionHandler(handler =>

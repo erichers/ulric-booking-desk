@@ -30,6 +30,7 @@ public static class Seeder
         DeskOptions desk,
         PaymentOptions payments,
         DeskHostOptions host,
+        string storageRoot,
         CancellationToken cancellationToken)
     {
         var config = new HostConfig(
@@ -44,6 +45,7 @@ public static class Seeder
             if (!desk.SeedSampleBookings)
             {
                 await DeleteSampleBookingsAsync(db, cancellationToken);
+                RemoveUnreferencedContractFiles(db, storageRoot);
             }
             else if (!await db.Bookings.AnyAsync(cancellationToken))
             {
@@ -75,6 +77,10 @@ public static class Seeder
         if (desk.SeedSampleBookings)
         {
             await SeedSampleStaysAsync(workflow, db, clock, cancellationToken);
+        }
+        else
+        {
+            RemoveUnreferencedContractFiles(db, storageRoot);
         }
     }
 
@@ -133,6 +139,35 @@ public static class Seeder
         await db.Reminders.Where(reminder => ids.Contains(reminder.BookingId)).ExecuteDeleteAsync(cancellationToken);
         await db.Contracts.Where(contract => ids.Contains(contract.BookingId)).ExecuteDeleteAsync(cancellationToken);
         await db.Bookings.Where(booking => ids.Contains(booking.Id)).ExecuteDeleteAsync(cancellationToken);
+    }
+
+    private static void RemoveUnreferencedContractFiles(DeskDb db, string storageRoot)
+    {
+        if (string.IsNullOrWhiteSpace(storageRoot))
+        {
+            return;
+        }
+
+        var directory = Path.Combine(storageRoot, "contracts");
+        if (!Directory.Exists(directory))
+        {
+            return;
+        }
+
+        var referenced = db.Contracts
+            .Select(contract => contract.PdfPath)
+            .ToList()
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .Select(path => Path.GetFileName(path!.Replace('\\', '/')))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var file in Directory.EnumerateFiles(directory, "*.pdf"))
+        {
+            if (!referenced.Contains(Path.GetFileName(file)))
+            {
+                File.Delete(file);
+            }
+        }
     }
 
     private static List<Property> LoadListings(string contentRoot, HostConfig config)
