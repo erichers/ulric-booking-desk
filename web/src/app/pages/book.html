@@ -14,7 +14,8 @@
     <div>
       <p class="eyebrow">{{ listing.locationLabel }}</p>
       <h1>{{ listing.name }}</h1>
-      <p class="lede">{{ listing.tagline }} Book directly with {{ listing.hostName }}.</p>
+      <p class="lede">{{ listing.tagline }}</p>
+      <p class="quiet">{{ listing.hostName }}</p>
       <p class="rate">
         <strong>{{ money(listing.nightlyRate) }}</strong> a {{ unit(listing) }}
         <span>{{ listing.minNights }} {{ unit(listing, listing.minNights) }} minimum</span>

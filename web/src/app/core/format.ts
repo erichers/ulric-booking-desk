@@ -37,6 +37,19 @@ export function label(value: string | null | undefined): string {
   return value.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
 }
 
+export function stayUnit(slug: string | null | undefined, count: number): string {
+  const one = slug === 'mara-ellison' ? 'session' : 'night';
+  return count === 1 ? one : `${one}s`;
+}
+
+export function feeName(slug: string | null | undefined): string {
+  return slug === 'mara-ellison' ? 'Styling' : 'Reset fee';
+}
+
+export function guestCount(count: number): string {
+  return `${count} ${count === 1 ? 'guest' : 'guests'}`;
+}
+
 export function todayIso(): string {
   const now = new Date();
   const month = `${now.getMonth() + 1}`.padStart(2, '0');

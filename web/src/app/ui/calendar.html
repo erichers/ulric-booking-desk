@@ -1,8 +1,8 @@
 <div class="calendar">
   <div class="calendar-bar">
-    <button type="button" class="ghost icon" (click)="shift(-1)" aria-label="Previous month">←</button>
+    <button type="button" class="text-btn" (click)="shift(-1)" aria-label="Previous month">Previous</button>
     <h2>{{ title() }}</h2>
-    <button type="button" class="ghost icon" (click)="shift(1)" aria-label="Next month">→</button>
+    <button type="button" class="text-btn" (click)="shift(1)" aria-label="Next month">Next</button>
   </div>
   <div class="weekdays" aria-hidden="true">
     <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>

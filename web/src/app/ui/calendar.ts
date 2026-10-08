@@ -72,7 +72,7 @@ export class Calendar {
     const checkOut = this.checkOut();
     if (!checkIn || checkOut) {
       if (cell.state !== 'Open') {
-        this.note.set(cell.state === 'Held' ? 'That night is held for a request.' : 'That night is booked.');
+        this.note.set(cell.state === 'Held' ? 'That date is held for a request.' : 'That date is booked.');
         return;
       }
       this.note.set('Now choose the checkout morning.');
@@ -82,7 +82,7 @@ export class Calendar {
 
     if (cell.date <= checkIn) {
       if (cell.state !== 'Open') {
-        this.note.set(cell.state === 'Held' ? 'That night is held for a request.' : 'That night is booked.');
+        this.note.set(cell.state === 'Held' ? 'That date is held for a request.' : 'That date is booked.');
         return;
       }
       this.note.set('Now choose the checkout morning.');
@@ -91,7 +91,7 @@ export class Calendar {
     }
 
     if (!this.nightsOpen(checkIn, cell.date)) {
-      this.note.set('Those nights are not open.');
+      this.note.set('Those dates are not open.');
       return;
     }
 

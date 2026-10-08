@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { Api } from '../core/api';
-import { money, prettyDate } from '../core/format';
+import { guestCount, money, prettyDate, stayUnit } from '../core/format';
 import { BookingSummary } from '../core/models';
 
 @Component({
@@ -14,6 +14,8 @@ export class Requests {
   private readonly api = inject(Api);
   readonly money = money;
   readonly prettyDate = prettyDate;
+  readonly stayUnit = stayUnit;
+  readonly guestCount = guestCount;
   readonly loading = signal(true);
   readonly rows = signal<BookingSummary[]>([]);
   readonly error = signal('');

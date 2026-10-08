@@ -24,7 +24,7 @@
       <label>{{ draft.feeLabel || 'Fee' }} <input type="number" name="cleaningFee" min="0" step="0.01" [(ngModel)]="draft.cleaningFee" /></label>
       <label>Service fee <input type="number" name="serviceFee" min="0" step="0.01" [(ngModel)]="draft.serviceFee" /></label>
       <label>Deposit percent <input type="number" name="depositPercent" min="0" max="100" step="0.01" [(ngModel)]="draft.depositPercent" /></label>
-      <label>Minimum nights <input type="number" name="minNights" min="1" [(ngModel)]="draft.minNights" /></label>
+      <label>Minimum {{ draft.rateLabel || 'night' }}s <input type="number" name="minNights" min="1" [(ngModel)]="draft.minNights" /></label>
       <label>Maximum guests <input type="number" name="maxGuests" min="1" [(ngModel)]="draft.maxGuests" /></label>
       <label>Check-in time <input name="checkInTime" [(ngModel)]="draft.checkInTime" /></label>
       <label>Checkout time <input name="checkOutTime" [(ngModel)]="draft.checkOutTime" /></label>

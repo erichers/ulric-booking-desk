@@ -16,7 +16,7 @@
         <div>
           <h2>{{ stay.guestName }}</h2>
           <p class="quiet">{{ stay.propertyName }}</p>
-          <p>{{ prettyDate(stay.checkIn) }} to {{ prettyDate(stay.checkOut) }} · {{ stay.nights }} nights · {{ stay.guests }} guests</p>
+          <p>{{ prettyDate(stay.checkIn) }} to {{ prettyDate(stay.checkOut) }} · {{ stay.nights }} {{ stayUnit(stay.propertySlug, stay.nights) }} · {{ guestCount(stay.guests) }}</p>
           <p>{{ money(stay.total) }} total, {{ money(stay.depositAmount) }} deposit</p>
           <p class="quiet">{{ stay.guestEmail }} @if (stay.guestPhone) { · {{ stay.guestPhone }} }</p>
           @if (stay.notes) {

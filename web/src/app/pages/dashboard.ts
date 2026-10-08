@@ -74,7 +74,7 @@ export class DeskHome implements AfterViewInit, OnDestroy {
             label: 'Collected',
             data: desk.revenueByMonth.map((month) => month.amount),
             backgroundColor: bar,
-            borderRadius: 6,
+            borderRadius: 0,
             maxBarThickness: 42,
           },
         ],

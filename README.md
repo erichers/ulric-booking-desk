@@ -37,9 +37,9 @@ Light desktop is the default. The same screens exist in dark mode and at phone w
 | --- | --- | --- |
 | Catalog | ![Catalog light](docs/screenshots/home-light-desktop.png) | ![Catalog dark](docs/screenshots/home-dark-desktop.png) |
 | North Room | ![Studio light](docs/screenshots/studio-light-desktop.png) | ![Studio dark](docs/screenshots/studio-dark-desktop.png) |
-| Mara Ellison | ![Photographer light](docs/screenshots/photographer-light-desktop.png) | ![Photographer dark](docs/screenshots/photographer-dark-phone.png) |
+| Mara Ellison | ![Photographer light](docs/screenshots/photographer-light-desktop.png) | ![Photographer dark](docs/screenshots/photographer-dark-desktop.png) |
 | Host desk | ![Desk light](docs/screenshots/dashboard-light-desktop.png) | ![Desk dark](docs/screenshots/dashboard-dark-desktop.png) |
-| Guest invoice | ![Guest light](docs/screenshots/guest-light-desktop.png) | ![Guest dark](docs/screenshots/guest-dark-phone.png) |
+| Guest invoice | ![Guest light](docs/screenshots/guest-light-desktop.png) | ![Guest dark](docs/screenshots/guest-dark-desktop.png) |
 
 Phone shots for the catalog, both booking pages, requests, bookings, a booking, the guest page, the outbox, and settings are in the same folder.
 

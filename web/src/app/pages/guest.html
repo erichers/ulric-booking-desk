@@ -4,7 +4,7 @@
 } @else if (stay(); as stay) {
   <p class="eyebrow">{{ stay.propertyName }}</p>
   <h1>{{ stay.guestName }}</h1>
-  <p class="lede">{{ prettyDate(stay.checkIn) }} to {{ prettyDate(stay.checkOut) }}, {{ stay.nights }} nights.</p>
+  <p class="lede">{{ prettyDate(stay.checkIn) }} to {{ prettyDate(stay.checkOut) }}, {{ stay.nights }} {{ stayUnit(stay.propertySlug, stay.nights) }}.</p>
   <p class="chips">
     <span class="chip" [class]="'chip ' + chip(stay.status)">{{ label(stay.status) }}</span>
     @if (stay.contractStatus) {

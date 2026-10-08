@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { Api } from '../core/api';
-import { chip, label, money, prettyDate, prettyWhen } from '../core/format';
+import { chip, label, money, prettyDate, prettyWhen, stayUnit } from '../core/format';
 import { BookingDetail } from '../core/models';
 import { Qr } from '../ui/qr';
 
@@ -20,6 +20,7 @@ export class Guest {
   readonly prettyWhen = prettyWhen;
   readonly chip = chip;
   readonly label = label;
+  readonly stayUnit = stayUnit;
 
   readonly loading = signal(true);
   readonly stay = signal<BookingDetail | null>(null);
