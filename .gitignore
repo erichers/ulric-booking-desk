@@ -1,0 +1,16 @@
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.idea/
+*.db
+*.db-shm
+*.db-wal
+api/src/Ulric.BookingDesk.Api/data/
+TestResults/
+web/node_modules/
+web/dist/
+web/.angular/
+.env
+.DS_Store

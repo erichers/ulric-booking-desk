@@ -1,0 +1,29 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    ports:
+      - "5080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: Data Source=/data/ulric.db
+      Storage__Root: /data
+      Desk__RemindersEnabled: "true"
+      Desk__ReminderIntervalSeconds: "30"
+      Desk__TimeZone: America/Los_Angeles
+    volumes:
+      - ulric-data:/data
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  ulric-data:

@@ -1,0 +1,30 @@
+<p class="eyebrow">Host desk</p>
+<h1>Outbox</h1>
+<p class="lede">Reminders are logged here. The desk does not send email or SMS.</p>
+
+@if (loading()) {
+  <div class="skeleton block"></div>
+} @else if (rows().length === 0) {
+  <section class="panel">
+    <h2>Nothing logged yet</h2>
+    <p>Due reminders appear here after the background job runs.</p>
+  </section>
+} @else {
+  <ul class="cards rich">
+    @for (message of rows(); track message.id) {
+      <li class="panel">
+        <p class="chips">
+          <span class="chip" [class]="'chip ' + chip(message.channel)">{{ message.channel }}</span>
+          <span class="quiet">{{ prettyWhen(message.loggedAt) }}</span>
+        </p>
+        <h2>{{ message.subject }}</h2>
+        <p class="quiet">{{ message.recipient }}</p>
+        <p>{{ message.body }}</p>
+      </li>
+    }
+  </ul>
+}
+
+@if (error()) {
+  <p class="banner" role="alert">{{ error() }}</p>
+}

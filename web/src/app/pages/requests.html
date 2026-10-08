@@ -1,0 +1,39 @@
+<p class="eyebrow">Host desk</p>
+<h1>Requests</h1>
+<p class="lede">Approve a request to issue the contract, the invoice, and the reminder schedule.</p>
+
+@if (loading()) {
+  <div class="skeleton block"></div>
+} @else if (rows().length === 0) {
+  <section class="panel">
+    <h2>No open requests</h2>
+    <p>New requests from the cottage page land here.</p>
+  </section>
+} @else {
+  <ul class="cards rich">
+    @for (stay of rows(); track stay.id) {
+      <li class="panel">
+        <div>
+          <h2>{{ stay.guestName }}</h2>
+          <p>{{ prettyDate(stay.checkIn) }} to {{ prettyDate(stay.checkOut) }} · {{ stay.nights }} nights · {{ stay.guests }} guests</p>
+          <p>{{ money(stay.total) }} total, {{ money(stay.depositAmount) }} deposit</p>
+          <p class="quiet">{{ stay.guestEmail }} @if (stay.guestPhone) { · {{ stay.guestPhone }} }</p>
+          @if (stay.notes) {
+            <p>{{ stay.notes }}</p>
+          }
+        </div>
+        <div class="row-actions">
+          <a class="text-link" [routerLink]="['/host/bookings', stay.id]">Details</a>
+          <button class="ghost" type="button" (click)="decide(stay.id, false)" [disabled]="busy() === stay.id">Decline</button>
+          <button class="primary" type="button" (click)="decide(stay.id, true)" [disabled]="busy() === stay.id">
+            {{ busy() === stay.id ? 'Saving' : 'Approve' }}
+          </button>
+        </div>
+      </li>
+    }
+  </ul>
+}
+
+@if (error()) {
+  <p class="banner" role="alert">{{ error() }}</p>
+}
