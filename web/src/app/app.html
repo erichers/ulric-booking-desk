@@ -1,0 +1,41 @@
+<a class="skip" href="#content">Skip to content</a>
+<div class="frame">
+  <header class="mast">
+    <a class="brand" routerLink="/">
+      <span class="wordmark">Ulric</span>
+      <span class="product">Booking Desk</span>
+    </a>
+    <nav class="mast-nav" aria-label="Primary">
+      <a routerLink="/book" routerLinkActive="is-here">Book</a>
+      <a routerLink="/host" routerLinkActive="is-here">Host desk</a>
+    </nav>
+    <button
+      type="button"
+      class="theme-toggle"
+      (click)="theme.toggle()"
+      [attr.aria-pressed]="theme.theme() === 'dark'"
+      [attr.aria-label]="theme.theme() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+    >
+      {{ theme.theme() === 'dark' ? 'Light' : 'Dark' }}
+    </button>
+  </header>
+
+  @if (hostDesk()) {
+    <nav class="subnav" aria-label="Host desk">
+      <a routerLink="/host" routerLinkActive="is-here" [routerLinkActiveOptions]="{ exact: true }">Desk</a>
+      <a routerLink="/host/requests" routerLinkActive="is-here">Requests</a>
+      <a routerLink="/host/bookings" routerLinkActive="is-here">Bookings</a>
+      <a routerLink="/host/outbox" routerLinkActive="is-here">Outbox</a>
+      <a routerLink="/host/settings" routerLinkActive="is-here">Settings</a>
+    </nav>
+  }
+
+  <main id="content">
+    <router-outlet />
+  </main>
+
+  <footer class="colophon">
+    <span class="wordmark">Ulric</span>
+    <p>Demo stays in Fernhollow, a fictional town. PayPal or Venmo after approval. This desk does not charge a card.</p>
+  </footer>
+</div>

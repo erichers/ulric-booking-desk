@@ -1,0 +1,27 @@
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.idea/
+*.db
+*.db-shm
+*.db-wal
+api/src/Ulric.BookingDesk.Api/data/
+TestResults/
+web/node_modules/
+web/dist/
+web/.angular/
+video/node_modules/
+video/out/
+.env
+.DS_Store
+
+# never commit real config or data
+appsettings.Production.json
+**/appsettings.Production.json
+/data/
+*.db
+.env
+.env.*
+!.env.example

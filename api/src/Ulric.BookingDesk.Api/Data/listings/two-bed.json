@@ -1,0 +1,240 @@
+{
+  "slug": "two-bed",
+  "unitLabel": "2-bed",
+  "airbnbId": "demo-two-bed",
+  "airbnbUrl": "https://example.com/stays/two-bed",
+  "name": "Two-Bedroom Suite with Full Kitchen",
+  "sortOrder": 1,
+  "invoicePrefix": "TB",
+  "nightlyRate": 197.0,
+  "maxGuests": 4,
+  "bedrooms": 2,
+  "beds": 2,
+  "baths": 1,
+  "rating": 4.9,
+  "reviewCount": 41,
+  "tagline": "2 bedrooms, sleeps 4",
+  "summary": "The upper floor of a fictional craftsman house in Fernhollow: two bedrooms, a full kitchen and a sunny living room. Good for a small family or two couples.",
+  "sections": [
+    {
+      "title": "The space",
+      "text": "Two queen bedrooms, one with a desk. The kitchen has a full-size range, dishwasher and the basics for cooking. The living room has a sofa, a TV and a fold-out table."
+    },
+    {
+      "title": "Guest access",
+      "text": "The whole suite, the shared backyard and street parking."
+    },
+    {
+      "title": "Other things to note",
+      "text": "This is sample copy for a fictional listing. Replace it with your own listing text."
+    }
+  ],
+  "houseRules": "Check-in after 3:00 PM Checkout before 11:00 AM Self check-in with smart lock 4 guests maximum No parties or events No smoking Additional rules. Please start the dishwasher before you leave.",
+  "checkInTime": "3:00 PM",
+  "checkOutTime": "11:00 AM",
+  "checkInInstructions": "Self check-in with smart lock. The host sends the entry details after the request is approved.",
+  "contains": [],
+  "amenities": [
+    {
+      "group": "Bathroom",
+      "items": [
+        "Hair dryer",
+        "Shampoo",
+        "Body soap",
+        "Hot water"
+      ]
+    },
+    {
+      "group": "Bedroom and laundry",
+      "items": [
+        "Essentials",
+        "Hangers",
+        "Bed linens",
+        "Extra pillows and blankets"
+      ]
+    },
+    {
+      "group": "Entertainment",
+      "items": [
+        "TV with streaming apps",
+        "Books and reading material"
+      ]
+    },
+    {
+      "group": "Heating and cooling",
+      "items": [
+        "Heating",
+        "Portable fan"
+      ]
+    },
+    {
+      "group": "Home safety",
+      "items": [
+        "Smoke alarm",
+        "Carbon monoxide alarm",
+        "Fire extinguisher",
+        "First aid kit"
+      ]
+    },
+    {
+      "group": "Internet and office",
+      "items": [
+        "Wifi",
+        "Dedicated workspace"
+      ]
+    },
+    {
+      "group": "Kitchen and dining",
+      "items": [
+        "Kitchen",
+        "Refrigerator",
+        "Microwave",
+        "Coffee maker",
+        "Dishes and silverware"
+      ]
+    },
+    {
+      "group": "Outdoor",
+      "items": [
+        "Private patio or deck",
+        "Outdoor furniture"
+      ]
+    },
+    {
+      "group": "Parking and facilities",
+      "items": [
+        "Free parking on premises"
+      ]
+    },
+    {
+      "group": "Services",
+      "items": [
+        "Self check-in",
+        "Long-term stays allowed"
+      ]
+    }
+  ],
+  "sleeping": [
+    {
+      "room": "Bedroom 1",
+      "beds": "1 queen bed"
+    },
+    {
+      "room": "Bedroom 2",
+      "beds": "1 queen bed"
+    }
+  ],
+  "subratings": [
+    {
+      "name": "Cleanliness",
+      "score": "4.9"
+    },
+    {
+      "name": "Accuracy",
+      "score": "4.9"
+    },
+    {
+      "name": "Check-in",
+      "score": "5.0"
+    },
+    {
+      "name": "Communication",
+      "score": "5.0"
+    },
+    {
+      "name": "Location",
+      "score": "4.8"
+    },
+    {
+      "name": "Value",
+      "score": "4.8"
+    }
+  ],
+  "photos": [
+    {
+      "src": "photos/stock/the-living-room-that-needs-houseplants.jpg",
+      "caption": "",
+      "room": "Living room"
+    },
+    {
+      "src": "photos/stock/coffee-table-corner-in-a-london-apartment-unsplash.jpg",
+      "caption": "",
+      "room": "Living room"
+    },
+    {
+      "src": "photos/stock/kitchen-unsplash.jpg",
+      "caption": "",
+      "room": "Full kitchen"
+    },
+    {
+      "src": "photos/stock/kitchen-drawer-unsplash.jpg",
+      "caption": "",
+      "room": "Full kitchen"
+    },
+    {
+      "src": "photos/stock/new-home-unsplash.jpg",
+      "caption": "",
+      "room": "Dining area"
+    },
+    {
+      "src": "photos/stock/dining-with-a-view-unsplash.jpg",
+      "caption": "",
+      "room": "Dining area"
+    },
+    {
+      "src": "photos/stock/ali-inay-2015-02-25-unsplash.jpg",
+      "caption": "",
+      "room": "Bedroom 1"
+    },
+    {
+      "src": "photos/stock/hotel-bedroom-windows-unsplash.jpg",
+      "caption": "",
+      "room": "Bedroom 1"
+    },
+    {
+      "src": "photos/stock/bekah-russom-2017-04-02-unsplash.jpg",
+      "caption": "",
+      "room": "Bedroom 2"
+    },
+    {
+      "src": "photos/stock/ny-loft-bedroom-unsplash.jpg",
+      "caption": "",
+      "room": "Bedroom 2"
+    },
+    {
+      "src": "photos/stock/bathroom-in-tallinn-2.jpg",
+      "caption": "",
+      "room": "Full bathroom"
+    },
+    {
+      "src": "photos/stock/bathroom-with-shower-48877908032.jpg",
+      "caption": "",
+      "room": "Full bathroom"
+    },
+    {
+      "src": "photos/stock/laptop-in-the-living-room-unsplash.jpg",
+      "caption": "",
+      "room": "Office"
+    },
+    {
+      "src": "photos/stock/partially-green-wooden-deck-unsplash.jpg",
+      "caption": "",
+      "room": "Backyard"
+    },
+    {
+      "src": "photos/stock/urban-greenery-unsplash.jpg",
+      "caption": "",
+      "room": "Backyard"
+    },
+    {
+      "src": "photos/stock/home-sweet-home-pt-4-unsplash.jpg",
+      "caption": "",
+      "room": "Laundry area"
+    },
+    {
+      "src": "photos/stock/evergreen-dorrington-pinecone-cottage-exterior.jpg",
+      "caption": "",
+      "room": "Exterior"
+    }
+  ]
+}

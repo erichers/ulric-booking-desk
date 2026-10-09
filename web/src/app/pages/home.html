@@ -1,0 +1,44 @@
+<h1>Booking Desk</h1>
+<p class="lede">Five demo stays in Fernhollow, a fictional town. PayPal or Venmo, details after approval.</p>
+@if (listings()[0]; as host) {
+  <p class="host-line">{{ host.hostName }} · {{ host.hostStats }}</p>
+}
+
+@if (loading()) {
+  <section class="catalog" aria-hidden="true">
+    <div class="skeleton block"></div>
+    <div class="skeleton block"></div>
+    <div class="skeleton block"></div>
+    <div class="skeleton block"></div>
+    <div class="skeleton block"></div>
+  </section>
+} @else {
+  <section class="catalog">
+    @for (listing of listings(); track listing.id) {
+      <a class="listing" [routerLink]="['/book', listing.slug]">
+        <img [src]="listing.heroImage" [alt]="listing.name" />
+        <div>
+          <p class="eyebrow">{{ listing.unitLabel }}</p>
+          <h2>{{ listing.name }}</h2>
+          <p>{{ listing.tagline }}</p>
+          <p class="quiet">From {{ money(listing.nightlyRate) }} a night · {{ listing.locationLabel }}</p>
+        </div>
+      </a>
+    }
+  </section>
+}
+
+@if (error()) {
+  <p class="banner" role="alert">{{ error() }}</p>
+}
+
+<section class="house">
+  <h2>Nested stays</h2>
+  <p class="lede">Four of these stays are one house. The 4&#8209;bed is the whole home. It contains the 3&#8209;bed, the 2&#8209;bed, and the studio. The 3&#8209;bed contains the 2&#8209;bed. The garden cottage stands apart and links to nothing.</p>
+  <app-unit-stack [units]="stackUnits()" />
+</section>
+
+<section class="flow-section">
+  <h2>Request to paid</h2>
+  <app-flow />
+</section>

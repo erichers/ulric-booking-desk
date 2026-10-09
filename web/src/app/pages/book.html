@@ -1,0 +1,437 @@
+@if (loading()) {
+  <section class="hero-grid" aria-hidden="true">
+    <div>
+      <div class="skeleton line short"></div>
+      <div class="skeleton display"></div>
+      <div class="skeleton line"></div>
+    </div>
+    <div class="skeleton block"></div>
+  </section>
+} @else if (!property()) {
+  <p class="eyebrow">Direct booking</p>
+  <h1>Book a stay</h1>
+  <p class="lede">Pick a property and dates. The nights are held when you send the request. PayPal or Venmo, details after approval.</p>
+  @if (catalog()[0]; as host) {
+    <p class="host-line">{{ host.hostName }} · {{ host.hostStats }}</p>
+  }
+  <section class="catalog">
+    @for (item of catalog(); track item.id) {
+      <a class="listing" [routerLink]="['/book', item.slug]">
+        <img [src]="item.heroImage" [alt]="item.name" />
+        <div>
+          <p class="eyebrow">{{ item.unitLabel }}</p>
+          <h2>{{ item.name }}</h2>
+          <p>{{ item.tagline }}</p>
+          <p class="quiet">From {{ money(item.nightlyRate) }} a night · {{ item.locationLabel }}</p>
+        </div>
+      </a>
+    }
+  </section>
+} @else if (property(); as listing) {
+  <div class="pp" [attr.data-slug]="listing.slug">
+  <nav class="pp-crumbs" aria-label="Stays">
+    <a class="text-link" routerLink="/book">All stays</a>
+  </nav>
+
+  <!-- 2. title block -->
+  <header class="pp-head">
+    <div class="pp-title">
+      <h1 tabindex="-1">{{ listing.name }}</h1>
+      <p class="pp-meta">
+        @if (listing.rating) {
+          <span class="pp-rating"><span aria-hidden="true">★</span> {{ listing.rating }}</span>
+          <a class="text-link" href="#reviews" (click)="jump('reviews', $event)">{{ listing.reviewCount }} reviews</a>
+          <span aria-hidden="true">·</span>
+        }
+        <span>{{ listing.unitLabel }}</span>
+        <span aria-hidden="true">·</span>
+        <span>{{ facts(listing) }}</span>
+      </p>
+    </div>
+    <div class="pp-actions">
+      <button type="button" class="ghost" (click)="share(listing)"><app-icon name="link" />Share</button>
+      <button type="button" class="ghost" [attr.aria-pressed]="saved()" (click)="toggleSave(listing)">
+        <svg class="ico-16" viewBox="0 0 16 16" aria-hidden="true"><path [class.filled]="saved()" d="M8 13.5S2 10 2 5.8A3 3 0 0 1 8 4.2a3 3 0 0 1 6 1.6C14 10 8 13.5 8 13.5z" /></svg>
+        {{ saved() ? 'Saved' : 'Save' }}
+      </button>
+      <span class="sr-only" aria-live="polite">{{ shareNote() }}</span>
+      @if (shareNote()) {
+        <span class="pp-note" aria-hidden="true">{{ shareNote() }}</span>
+      }
+    </div>
+  </header>
+
+  <!-- 3. photo hero: 1440 grid of 5, 768 grid of 3, 390 full-bleed carousel -->
+  <section class="pg" aria-label="Photos" [class.pg-few]="heroPhotos().length < 5" [class.pg-few3]="heroPhotos().length < 3">
+    @if (!phone()) {
+    <div class="pg-grid">
+      @for (photo of heroPhotos(); track photo.src; let i = $index) {
+        @let m = photos.info(photo.src);
+        <button type="button" class="pg-cell" [class.pg-main]="i === 0" (click)="openViewer(photo)"
+          [attr.aria-label]="'Open photo ' + (i + 1) + ' of ' + listing.gallery.length + ': ' + (photo.caption || roomName(photo.room))">
+          <img [src]="i === 0 ? photo.src : photos.small(photo.src)" [attr.srcset]="photos.srcset(photo.src)"
+            [attr.sizes]="i === 0 ? '(min-width: 1024px) 556px, 464px' : '(min-width: 1024px) 274px, 232px'"
+            [attr.width]="m.w" [attr.height]="m.h" alt=""
+            [attr.loading]="i === 0 ? 'eager' : null" [attr.fetchpriority]="i === 0 ? 'high' : null" decoding="async"
+            [style.background-image]="m.q ? 'url(' + m.q + ')' : null" />
+        </button>
+      }
+    </div>
+    } @else {
+    <!-- phone: swipe track; tapping a photo opens the viewer there. Keyboard path: the Show all button. -->
+    <div class="pg-carousel">
+      <div class="pg-track" (scroll)="onSlide($event)" (click)="openViewer(listing.gallery[slide()])">
+        @for (photo of listing.gallery; track photo.src; let i = $index) {
+          @let m = photos.info(photo.src);
+          <div class="pg-slide">
+            <img [src]="photos.small(photo.src)" [attr.srcset]="photos.srcset(photo.src)" sizes="100vw"
+              [attr.width]="m.w" [attr.height]="m.h" [alt]="photo.caption || roomName(photo.room)" [attr.loading]="i === 0 ? null : 'lazy'" decoding="async"
+              [attr.fetchpriority]="i === 0 ? 'high' : null"
+              [style.background-image]="m.q ? 'url(' + m.q + ')' : null" />
+          </div>
+        }
+      </div>
+    </div>
+    }
+    <div class="pg-foot">
+      <p class="pg-count" aria-live="polite">{{ slide() + 1 }} / {{ listing.gallery.length }}</p>
+      <button type="button" class="pg-all" (click)="openAllPhotos()">
+        <app-icon name="grid" />Show all {{ listing.gallery.length }} photos
+      </button>
+    </div>
+  </section>
+
+  <div class="pp-body">
+    <div class="pp-main">
+      @if (!wide()) {
+        <div class="pp-cta" #cta>
+          <p><strong>{{ money(listing.nightlyRate) }} {{ unit(listing) }}</strong>
+            @if (checkIn() && checkOut()) {
+              <span>{{ prettyDate(checkIn()) }} to {{ prettyDate(checkOut()) }}</span>
+            } @else {
+              <a class="bar-dates" href="#dates" (click)="jump('dates', $event)">Add dates</a>
+            }
+          </p>
+          <button type="button" class="reserve" (click)="barReserve()">Reserve</button>
+        </div>
+      }
+      <!-- 5. host and summary -->
+      <section class="pp-section pp-summary" aria-labelledby="sum-h">
+        <h2 id="sum-h">{{ listing.kind }} hosted by {{ listing.hostName }}</h2>
+        <p class="quiet">{{ listing.hostStats }}</p>
+        <ul class="pp-highlights" aria-label="Highlights">
+          <li><app-icon name="home" /><div><strong>{{ listing.kind }}</strong><p>The {{ listing.unitLabel === 'Cottage' ? 'cottage' : 'space' }} is yours, for up to {{ listing.maxGuests }} {{ listing.maxGuests === 1 ? 'guest' : 'guests' }}.</p></div></li>
+          <li><app-icon name="key" /><div><strong>Check-in {{ listing.checkInTime }}</strong><p>Checkout {{ listing.checkOutTime }}. {{ listing.minNights }} {{ unit(listing, listing.minNights) }} minimum.</p></div></li>
+          <li><app-icon name="link" /><div><strong>{{ listing.blocks.length ? 'Part of one house' : 'Stands on its own' }}</strong><p>{{ holds(listing) }}</p></div></li>
+        </ul>
+        <p class="copy clamp">{{ clean(listing.description) }}</p>
+        <button type="button" class="ghost" (click)="openDialog('about')">Read more</button>
+      </section>
+
+      <!-- 6. room tour -->
+      <section class="pp-section tour" id="tour" aria-labelledby="tour-h">
+        <h2 id="tour-h" tabindex="-1">Photo tour</h2>
+        <nav class="tour-nav" aria-label="Rooms">
+          <div class="tour-chips">
+            @for (group of rooms(); track group.id) {
+              <a class="chip" [href]="'#' + group.id" (click)="jump(group.id, $event)"
+                [class.active]="activeRoom() === group.id" [attr.aria-current]="activeRoom() === group.id ? 'true' : null">
+                {{ group.name }} <span>{{ group.photos.length }}</span>
+              </a>
+            }
+          </div>
+        </nav>
+        @for (group of rooms(); track group.id) {
+          <section class="room" #roomEl [id]="group.id" [attr.aria-labelledby]="group.id + '-h'">
+            <h3 [id]="group.id + '-h'" tabindex="-1">{{ group.name }}@if (roomBeds(listing, group.name); as beds) {<span class="room-beds"> · {{ beds }}</span>}</h3>
+            <div class="room-shots">
+              @for (photo of group.photos; track photo.src) {
+                @let m = photos.info(photo.src);
+                <figure class="room-fig" [class.portrait]="m.h > m.w">
+                  <button type="button" class="room-shot" (click)="openViewer(photo)"
+                    [attr.aria-label]="'Open photo ' + (photoIndex(photo) + 1) + ' of ' + listing.gallery.length + ': ' + (photo.caption || group.name)">
+                    <img [src]="photos.small(photo.src)" [attr.srcset]="photos.srcset(photo.src)"
+                      sizes="(min-width: 1024px) 643px, (min-width: 768px) 704px, 342px"
+                      [attr.width]="m.w" [attr.height]="m.h" alt="" loading="lazy" decoding="async"
+                      [style.background-image]="m.q ? 'url(' + m.q + ')' : null" />
+                  </button>
+                  @if (photo.caption) {
+                    <figcaption>{{ photo.caption }}</figcaption>
+                  }
+                </figure>
+              }
+            </div>
+          </section>
+        }
+      </section>
+
+      <!-- 7. sleeping -->
+      @if (listing.sleeping.length) {
+        <section class="pp-section" aria-labelledby="sleep-h">
+          <h2 id="sleep-h">Where you'll sleep</h2>
+          <div class="sleep">
+            @for (bed of listing.sleeping; track bed.room) {
+              @let shot = roomPhoto(bed.room);
+              <figure class="sleep-card">
+                @if (shot) {
+                  @let m = photos.info(shot.src);
+                  <button type="button" class="sleep-img" (click)="openViewer(shot)" [attr.aria-label]="'Open photo of ' + bed.room">
+                    <img [src]="photos.small(shot.src)" [attr.width]="m.w" [attr.height]="m.h" alt="" loading="lazy" decoding="async"
+                      [style.background-image]="m.q ? 'url(' + m.q + ')' : null" />
+                  </button>
+                } @else {
+                  <div class="sleep-img empty"><app-icon name="bed" /></div>
+                }
+                <figcaption><strong>{{ bed.room }}</strong><span>{{ bed.beds }}</span></figcaption>
+              </figure>
+            }
+          </div>
+        </section>
+      }
+
+      <!-- 8. amenities -->
+      @if (listing.amenities.length) {
+        <section class="pp-section" aria-labelledby="amen-h">
+          <h2 id="amen-h">What this place offers</h2>
+          <ul class="amen">
+            @for (item of topAmenities(); track item) {
+              <li><app-icon [name]="icon(item)" />{{ item }}</li>
+            }
+          </ul>
+          @if (amenityCount() > 10) {
+            <button type="button" class="ghost" (click)="openDialog('amenities')">Show all {{ amenityCount() }} amenities</button>
+          }
+        </section>
+      }
+
+      <!-- 9. calendar -->
+      <section class="pp-section" id="dates" aria-labelledby="dates-h">
+        <h2 id="dates-h" tabindex="-1">Choose your dates</h2>
+        <p class="quiet">
+          @if (checkIn() && checkOut()) {
+            {{ prettyDate(checkIn()) }} to {{ prettyDate(checkOut()) }}
+          } @else if (checkIn()) {
+            Start {{ prettyDate(checkIn()) }}. Choose the end date.
+          } @else {
+            Select an open day, then the day you finish.
+          }
+        </p>
+        <app-calendar [days]="days()" [checkIn]="checkIn()" [checkOut]="checkOut()" [today]="today" (picked)="onPicked($event)" />
+      </section>
+    </div>
+
+    <!-- 11. booking card (1024 and up) -->
+    @if (wide()) {
+      <aside class="pp-aside" aria-label="Request to book">
+        <div class="bk bk-live"><ng-container [ngTemplateOutlet]="card" [ngTemplateOutletContext]="{ $implicit: listing }" /></div>
+      </aside>
+    }
+  </div>
+
+  <!-- 12. 3D -->
+  <section class="pp-section pp-3d" aria-labelledby="pp-3d-h">
+    <h2 id="pp-3d-h">Explore the house in 3D</h2>
+    <p class="quiet">The {{ listing.unitLabel }} is highlighted in the whole property.</p>
+    <app-unit-stack [units]="stackUnits()" [initial]="listing.slug" />
+    <details class="pp-sources">
+      <summary>3D model sources</summary>
+      <p class="quiet">The house is drawn from the floor plans. Textures, sky and furniture are free CC0 assets.</p>
+      <ul>
+        @for (s of modelSources; track s.name) {
+          <li><a [href]="s.url" target="_blank" rel="noopener">{{ s.name }}</a> <span class="quiet">{{ s.kind }}, {{ s.by }}, {{ s.lic }}</span></li>
+        }
+      </ul>
+    </details>
+  </section>
+
+  <!-- 13. location -->
+  <section class="pp-section pp-loc" aria-labelledby="loc-h">
+    <h2 id="loc-h">Where you'll be</h2>
+    <p class="quiet">{{ listing.locationLabel }}. The exact address comes with your confirmation.</p>
+    <div class="pp-map">
+      <app-map [lat]="area.lat" [lng]="area.lng" [area]="area.radius" [zoom]="14" [label]="area.label" />
+    </div>
+  </section>
+
+  <!-- 14. reviews and ratings -->
+  @if (listing.reviewCount > 0) {
+    <section class="pp-section" id="reviews" aria-labelledby="rev-h">
+      <h2 id="rev-h" tabindex="-1"><span class="rev-score">★ {{ listing.rating }}</span> · {{ listing.reviewCount }} reviews</h2>
+      @if (listing.subratings.length) {
+        <dl class="subratings">
+          @for (item of listing.subratings; track item.name) {
+            <div><dt>{{ item.name }}</dt><dd>{{ item.score }}</dd></div>
+          }
+        </dl>
+      }
+    </section>
+  }
+
+  <!-- 15. things to know -->
+  <section class="pp-section" aria-labelledby="know-h">
+    <h2 id="know-h">Things to know</h2>
+    <div class="trio pp-things">
+      <article>
+        <h3>Check-in</h3>
+        <p>Check-in {{ listing.checkInTime }}. Checkout {{ listing.checkOutTime }}.</p>
+        <p>{{ listing.checkInInstructions }}</p>
+      </article>
+      <article>
+        <h3>House rules</h3>
+        <ul class="rules">
+          @for (rule of rules(listing.houseRules); track rule) {
+            <li>{{ rule }}</li>
+          }
+        </ul>
+      </article>
+      <article>
+        <h3>Cancellation</h3>
+        <p>{{ clean(listing.cancellationPolicy) }}</p>
+      </article>
+    </div>
+  </section>
+
+  @if (!wide()) {
+    <div class="bk-bar" role="region" aria-label="Request to book" [class.on]="barOn()" [attr.aria-hidden]="!barOn()" [attr.inert]="barOn() ? null : ''">
+      <p><strong>{{ money(listing.nightlyRate) }} {{ unit(listing) }}</strong>
+        @if (checkIn() && checkOut()) {
+          <span>{{ prettyDate(checkIn()) }} to {{ prettyDate(checkOut()) }}</span>
+        } @else {
+          <a class="bar-dates" href="#dates" (click)="jump('dates', $event)">Add dates</a>
+        }
+      </p>
+      <button type="button" class="reserve" (click)="barReserve()">Reserve</button>
+    </div>
+  }
+  </div>
+
+  <!-- dialogs -->
+  <app-modal variant="paper" [label]="'All ' + listing.gallery.length + ' photos'" [open]="allPhotosOpen()" (dismiss)="closeTop()">
+    <div class="allp">
+      @for (group of rooms(); track group.id) {
+        <section class="allp-room" [attr.aria-label]="group.name">
+          <h3>{{ group.name }}</h3>
+          <div class="allp-grid">
+            @for (photo of group.photos; track photo.src) {
+              @let m = photos.info(photo.src);
+              <button type="button" class="allp-shot" (click)="openViewer(photo)"
+                [attr.aria-label]="'Open photo ' + (photoIndex(photo) + 1) + ' of ' + listing.gallery.length + ': ' + (photo.caption || group.name)">
+                <img [src]="photos.small(photo.src)" [attr.width]="m.w" [attr.height]="m.h" alt="" loading="lazy" decoding="async"
+                  [style.background-image]="m.q ? 'url(' + m.q + ')' : null" />
+              </button>
+            }
+          </div>
+        </section>
+      }
+    </div>
+  </app-modal>
+
+  <app-viewer [photos]="listing.gallery" [title]="listing.name" [index]="viewerIndex()" (indexChange)="setViewer($event)" (dismiss)="closeTop()" />
+
+  <app-modal label="What this place offers" [open]="dialog() === 'amenities'" (dismiss)="closeTop()">
+    <div class="modal-body">
+      @for (group of listing.amenities; track group.group) {
+        <h3>{{ group.group }}</h3>
+        <ul class="amen amen-full">
+          @for (item of group.items; track item) {
+            <li><app-icon [name]="icon(item)" />{{ item }}</li>
+          }
+        </ul>
+      }
+    </div>
+  </app-modal>
+
+  <app-modal label="About this place" [open]="dialog() === 'about'" (dismiss)="closeTop()">
+    <div class="modal-body">
+      <p class="copy">{{ clean(listing.description) }}</p>
+      @for (section of listing.sections; track section.title) {
+        <h3>{{ section.title }}</h3>
+        <p class="copy">{{ clean(section.text) }}</p>
+      }
+    </div>
+  </app-modal>
+
+  <app-modal label="Choose your dates" [open]="dialog() === 'dates'" (dismiss)="closeTop()">
+    <div class="modal-body">
+      <app-calendar [days]="days()" [checkIn]="checkIn()" [checkOut]="checkOut()" [today]="today" (picked)="onPicked($event)" />
+    </div>
+  </app-modal>
+
+  @if (!wide()) {
+    <app-modal variant="sheet" label="Request to book" [open]="dialog() === 'book'" (dismiss)="closeTop()">
+      <div class="modal-body bk-live">
+        <ng-container [ngTemplateOutlet]="card" [ngTemplateOutletContext]="{ $implicit: listing }" />
+      </div>
+    </app-modal>
+  }
+
+  <ng-template #card let-listing>
+    @if (confirmation(); as stay) {
+      <div class="bk-done" role="status">
+        <h2>Request sent</h2>
+        <p>{{ stay.guestName }}, {{ prettyDate(stay.checkIn) }} to {{ prettyDate(stay.checkOut) }} is requested. Those nights are held until {{ listing.hostName }} approves or declines@if (stay.holdUntil) {, or until {{ prettyWhen(stay.holdUntil) }}}.</p>
+        <a class="text-link" [routerLink]="stay.guestPath">Open the guest page</a>
+      </div>
+    } @else {
+      <p class="bk-rate"><strong>{{ money(listing.nightlyRate) }}</strong> {{ unit(listing) }}</p>
+      <form class="bk-form" (submit)="$event.preventDefault(); step() === 'dates' ? reserve() : submit()">
+        @if (step() === 'dates') {
+          <div class="bk-dates">
+            <button type="button" (click)="openDialog('dates')"><span>Check-in</span>{{ checkIn() ? prettyDate(checkIn()) : 'Add date' }}</button>
+            <button type="button" (click)="openDialog('dates')"><span>Checkout</span>{{ checkOut() ? prettyDate(checkOut()) : 'Add date' }}</button>
+          </div>
+          <div class="bk-guests" role="group" aria-label="Guests">
+            <span>Guests</span>
+            <button type="button" class="bk-step" (click)="guests = guests - 1" [disabled]="guests <= 1" aria-label="Fewer guests">−</button>
+            <output aria-live="polite">{{ guests }}</output>
+            <button type="button" class="bk-step" (click)="guests = guests + 1" [disabled]="guests >= listing.maxGuests" aria-label="More guests">+</button>
+          </div>
+          <button class="reserve" type="submit">Reserve</button>
+          <p class="bk-note">You won't be charged yet</p>
+          @if (quoting()) {
+            <div class="skeleton line" aria-hidden="true"></div>
+          } @else if (quote(); as price) {
+            <dl class="bk-lines">
+              <div><dt>{{ money(price.nightlyRate) }} x {{ price.nights }} {{ unit(listing, price.nights) }}</dt><dd>{{ money(price.staySubtotal) }}</dd></div>
+              @if (price.cleaningFee) {
+                <div><dt>{{ listing.feeLabel }}</dt><dd>{{ money(price.cleaningFee) }}</dd></div>
+              }
+              @if (price.serviceFee) {
+                <div><dt>Service fee</dt><dd>{{ money(price.serviceFee) }}</dd></div>
+              }
+              <div class="total"><dt>Total</dt><dd>{{ money(price.total) }}</dd></div>
+              @if (price.depositAmount) {
+                <div><dt>Deposit due after approval</dt><dd>{{ money(price.depositAmount) }}</dd></div>
+              }
+            </dl>
+            @if (price.nights < listing.minNights) {
+              <p class="hint">This listing asks for at least {{ listing.minNights }} {{ unit(listing, listing.minNights) }}.</p>
+            }
+          }
+        } @else {
+          <p class="quiet">{{ prettyDate(checkIn()) }} to {{ prettyDate(checkOut()) }} · {{ guests }} {{ guests == 1 ? 'guest' : 'guests' }}</p>
+          <label>Name
+            <input id="bk-name" name="guestName" [(ngModel)]="guestName" autocomplete="name" required />
+          </label>
+          <label>Email
+            <input type="email" name="guestEmail" [(ngModel)]="guestEmail" autocomplete="email" required />
+          </label>
+          <label>Phone
+            <input name="guestPhone" [(ngModel)]="guestPhone" autocomplete="tel" required minlength="7" />
+          </label>
+          <label>Note
+            <textarea name="notes" rows="2" [(ngModel)]="notes"></textarea>
+          </label>
+          <div class="bk-actions">
+            <button type="button" class="ghost" (click)="step.set('dates')">Back</button>
+            <button class="reserve" type="submit" [disabled]="submitting() || !checkOut()">{{ submitting() ? 'Sending' : 'Request the dates' }}</button>
+          </div>
+          <p class="bk-note">The nights are held when you send the request. PayPal or Venmo, details after approval.</p>
+        }
+        @if (error()) {
+          <p class="banner" role="alert">{{ error() }}</p>
+        }
+      </form>
+    }
+  </ng-template>
+}

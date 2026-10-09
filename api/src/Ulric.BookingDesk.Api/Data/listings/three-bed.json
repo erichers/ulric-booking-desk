@@ -1,0 +1,261 @@
+{
+  "slug": "three-bed",
+  "unitLabel": "3-bed",
+  "airbnbId": "demo-three-bed",
+  "airbnbUrl": "https://example.com/stays/three-bed",
+  "name": "Three-Bedroom Bungalow with Reading Nook",
+  "sortOrder": 2,
+  "invoicePrefix": "TH",
+  "nightlyRate": 220.5,
+  "maxGuests": 7,
+  "bedrooms": 3,
+  "beds": 3,
+  "baths": 1,
+  "rating": 4.88,
+  "reviewCount": 37,
+  "tagline": "3 bedrooms, sleeps 7",
+  "summary": "A fictional bungalow in Fernhollow with three bedrooms, a reading nook and a dining table for six.",
+  "sections": [
+    {
+      "title": "The space",
+      "text": "Three queen bedrooms, a full kitchen, a dining area and a living room with a reading nook. The two-bedroom suite can be booked on its own or with the rest of the house."
+    },
+    {
+      "title": "Guest access",
+      "text": "The whole bungalow, the backyard and the patio."
+    },
+    {
+      "title": "Other things to note",
+      "text": "This is sample copy for a fictional listing. Replace it with your own listing text."
+    }
+  ],
+  "houseRules": "Check-in after 3:00 PM Checkout before 11:00 AM Self check-in with smart lock 7 guests maximum No parties or events No smoking Additional rules. Please start the dishwasher before you leave.",
+  "checkInTime": "3:00 PM",
+  "checkOutTime": "11:00 AM",
+  "checkInInstructions": "Self check-in with smart lock. The host sends the entry details after the request is approved.",
+  "contains": [
+    "two-bed"
+  ],
+  "amenities": [
+    {
+      "group": "Bathroom",
+      "items": [
+        "Hair dryer",
+        "Shampoo",
+        "Body soap",
+        "Hot water"
+      ]
+    },
+    {
+      "group": "Bedroom and laundry",
+      "items": [
+        "Essentials",
+        "Hangers",
+        "Bed linens",
+        "Extra pillows and blankets"
+      ]
+    },
+    {
+      "group": "Entertainment",
+      "items": [
+        "TV with streaming apps",
+        "Books and reading material"
+      ]
+    },
+    {
+      "group": "Heating and cooling",
+      "items": [
+        "Heating",
+        "Portable fan"
+      ]
+    },
+    {
+      "group": "Home safety",
+      "items": [
+        "Smoke alarm",
+        "Carbon monoxide alarm",
+        "Fire extinguisher",
+        "First aid kit"
+      ]
+    },
+    {
+      "group": "Internet and office",
+      "items": [
+        "Wifi",
+        "Dedicated workspace"
+      ]
+    },
+    {
+      "group": "Kitchen and dining",
+      "items": [
+        "Kitchen",
+        "Refrigerator",
+        "Microwave",
+        "Coffee maker",
+        "Dishes and silverware"
+      ]
+    },
+    {
+      "group": "Outdoor",
+      "items": [
+        "Private patio or deck",
+        "Outdoor furniture"
+      ]
+    },
+    {
+      "group": "Parking and facilities",
+      "items": [
+        "Free parking on premises"
+      ]
+    },
+    {
+      "group": "Services",
+      "items": [
+        "Self check-in",
+        "Long-term stays allowed"
+      ]
+    }
+  ],
+  "sleeping": [
+    {
+      "room": "Bedroom 1",
+      "beds": "1 queen bed"
+    },
+    {
+      "room": "Bedroom 2",
+      "beds": "1 queen bed"
+    },
+    {
+      "room": "Bedroom 3",
+      "beds": "1 queen bed"
+    }
+  ],
+  "subratings": [
+    {
+      "name": "Cleanliness",
+      "score": "4.9"
+    },
+    {
+      "name": "Accuracy",
+      "score": "4.9"
+    },
+    {
+      "name": "Check-in",
+      "score": "5.0"
+    },
+    {
+      "name": "Communication",
+      "score": "5.0"
+    },
+    {
+      "name": "Location",
+      "score": "4.8"
+    },
+    {
+      "name": "Value",
+      "score": "4.8"
+    }
+  ],
+  "photos": [
+    {
+      "src": "photos/stock/take-a-seat-unsplash.jpg",
+      "caption": "",
+      "room": "Living room"
+    },
+    {
+      "src": "photos/stock/the-living-room-that-needs-houseplants.jpg",
+      "caption": "",
+      "room": "Living room"
+    },
+    {
+      "src": "photos/stock/blue-white-kitchen-interior-unsplash.jpg",
+      "caption": "",
+      "room": "Full kitchen"
+    },
+    {
+      "src": "photos/stock/kitchen-unsplash.jpg",
+      "caption": "",
+      "room": "Full kitchen"
+    },
+    {
+      "src": "photos/stock/round-table-in-a-bright-room-unsplash.jpg",
+      "caption": "",
+      "room": "Dining area"
+    },
+    {
+      "src": "photos/stock/new-home-unsplash.jpg",
+      "caption": "",
+      "room": "Dining area"
+    },
+    {
+      "src": "photos/stock/ny-loft-bedroom-unsplash.jpg",
+      "caption": "",
+      "room": "Bedroom 1"
+    },
+    {
+      "src": "photos/stock/ali-inay-2015-02-25-unsplash.jpg",
+      "caption": "",
+      "room": "Bedroom 1"
+    },
+    {
+      "src": "photos/stock/hotel-bedroom-windows-unsplash.jpg",
+      "caption": "",
+      "room": "Bedroom 2"
+    },
+    {
+      "src": "photos/stock/bekah-russom-2017-04-02-unsplash.jpg",
+      "caption": "",
+      "room": "Bedroom 2"
+    },
+    {
+      "src": "photos/stock/ny-loft-bedroom-unsplash.jpg",
+      "caption": "",
+      "room": "Bedroom 3"
+    },
+    {
+      "src": "photos/stock/ali-inay-2015-02-25-unsplash.jpg",
+      "caption": "",
+      "room": "Bedroom 3"
+    },
+    {
+      "src": "photos/stock/bathroom-shower-48877712171.jpg",
+      "caption": "",
+      "room": "Full bathroom"
+    },
+    {
+      "src": "photos/stock/bathroom-in-tallinn-2.jpg",
+      "caption": "",
+      "room": "Full bathroom"
+    },
+    {
+      "src": "photos/stock/laptop-in-the-living-room-unsplash.jpg",
+      "caption": "",
+      "room": "Office"
+    },
+    {
+      "src": "photos/stock/urban-greenery-unsplash.jpg",
+      "caption": "",
+      "room": "Backyard"
+    },
+    {
+      "src": "photos/stock/partially-green-wooden-deck-unsplash.jpg",
+      "caption": "",
+      "room": "Backyard"
+    },
+    {
+      "src": "photos/stock/plants-on-the-front-porch-unsplash.jpg",
+      "caption": "",
+      "room": "Patio"
+    },
+    {
+      "src": "photos/stock/home-sweet-home-pt-4-unsplash.jpg",
+      "caption": "",
+      "room": "Laundry area"
+    },
+    {
+      "src": "photos/stock/evergreen-dorrington-pinecone-cottage-exterior.jpg",
+      "caption": "",
+      "room": "Exterior"
+    }
+  ]
+}

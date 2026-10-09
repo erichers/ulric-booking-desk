@@ -1,0 +1,191 @@
+{
+  "slug": "studio",
+  "unitLabel": "Studio",
+  "airbnbId": "demo-studio",
+  "airbnbUrl": "https://example.com/stays/studio",
+  "name": "Garden Studio with Private Deck",
+  "sortOrder": 0,
+  "invoicePrefix": "ST",
+  "nightlyRate": 111.0,
+  "maxGuests": 2,
+  "bedrooms": 1,
+  "beds": 1,
+  "baths": 1,
+  "rating": 4.86,
+  "reviewCount": 64,
+  "tagline": "1 bedroom, sleeps 2",
+  "summary": "A bright, compact studio on a quiet street in Fernhollow, a fictional town used for this demo. Vaulted ceilings, a skylight and a small private deck make it an easy base for two.\n\nThe studio has its own entrance and one parking space.",
+  "sections": [
+    {
+      "title": "The space",
+      "text": "A queen bed, a reading chair, a kitchenette with a mini fridge, kettle and coffee maker, and a walk-in shower. Heated floors keep the room warm on cold mornings."
+    },
+    {
+      "title": "Guest access",
+      "text": "The whole studio, the private deck and one parking space."
+    },
+    {
+      "title": "Other things to note",
+      "text": "This is sample copy for a fictional listing. Replace it with your own listing text."
+    }
+  ],
+  "houseRules": "Check-in after 3:00 PM Checkout before 11:00 AM Self check-in with smart lock 2 guests maximum No parties or events No smoking Additional rules. Please start the dishwasher before you leave.",
+  "checkInTime": "3:00 PM",
+  "checkOutTime": "11:00 AM",
+  "checkInInstructions": "Self check-in with smart lock. The host sends the entry details after the request is approved.",
+  "contains": [],
+  "amenities": [
+    {
+      "group": "Bathroom",
+      "items": [
+        "Hair dryer",
+        "Shampoo",
+        "Body soap",
+        "Hot water"
+      ]
+    },
+    {
+      "group": "Bedroom and laundry",
+      "items": [
+        "Essentials",
+        "Hangers",
+        "Bed linens",
+        "Extra pillows and blankets"
+      ]
+    },
+    {
+      "group": "Entertainment",
+      "items": [
+        "TV with streaming apps",
+        "Books and reading material"
+      ]
+    },
+    {
+      "group": "Heating and cooling",
+      "items": [
+        "Heating",
+        "Portable fan"
+      ]
+    },
+    {
+      "group": "Home safety",
+      "items": [
+        "Smoke alarm",
+        "Carbon monoxide alarm",
+        "Fire extinguisher",
+        "First aid kit"
+      ]
+    },
+    {
+      "group": "Internet and office",
+      "items": [
+        "Wifi",
+        "Dedicated workspace"
+      ]
+    },
+    {
+      "group": "Kitchen and dining",
+      "items": [
+        "Kitchen",
+        "Refrigerator",
+        "Microwave",
+        "Coffee maker",
+        "Dishes and silverware"
+      ]
+    },
+    {
+      "group": "Outdoor",
+      "items": [
+        "Private patio or deck",
+        "Outdoor furniture"
+      ]
+    },
+    {
+      "group": "Parking and facilities",
+      "items": [
+        "Free parking on premises"
+      ]
+    },
+    {
+      "group": "Services",
+      "items": [
+        "Self check-in",
+        "Long-term stays allowed"
+      ]
+    }
+  ],
+  "sleeping": [
+    {
+      "room": "Bedroom",
+      "beds": "1 double bed"
+    }
+  ],
+  "subratings": [
+    {
+      "name": "Cleanliness",
+      "score": "4.9"
+    },
+    {
+      "name": "Accuracy",
+      "score": "4.9"
+    },
+    {
+      "name": "Check-in",
+      "score": "5.0"
+    },
+    {
+      "name": "Communication",
+      "score": "5.0"
+    },
+    {
+      "name": "Location",
+      "score": "4.8"
+    },
+    {
+      "name": "Value",
+      "score": "4.8"
+    }
+  ],
+  "photos": [
+    {
+      "src": "photos/stock/bekah-russom-2017-04-02-unsplash.jpg",
+      "caption": "",
+      "room": "Bedroom"
+    },
+    {
+      "src": "photos/stock/ny-loft-bedroom-unsplash.jpg",
+      "caption": "",
+      "room": "Bedroom"
+    },
+    {
+      "src": "photos/stock/phoenix-bathroom-residence-inn-marriott-hotel-with.jpg",
+      "caption": "",
+      "room": "Full bathroom"
+    },
+    {
+      "src": "photos/stock/bathroom-shower-48877712171.jpg",
+      "caption": "",
+      "room": "Full bathroom"
+    },
+    {
+      "src": "photos/stock/partially-green-wooden-deck-unsplash.jpg",
+      "caption": "",
+      "room": "Backyard"
+    },
+    {
+      "src": "photos/stock/urban-greenery-unsplash.jpg",
+      "caption": "",
+      "room": "Backyard"
+    },
+    {
+      "src": "photos/stock/plants-on-the-front-porch-unsplash.jpg",
+      "caption": "",
+      "room": "Patio"
+    },
+    {
+      "src": "photos/stock/evergreen-dorrington-pinecone-cottage-exterior.jpg",
+      "caption": "",
+      "room": "Exterior"
+    }
+  ]
+}

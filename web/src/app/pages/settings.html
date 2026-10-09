@@ -1,0 +1,54 @@
+<p class="eyebrow">Host desk</p>
+<h1>Settings</h1>
+<p class="lede">Rates on this page apply to new requests. Signed contracts keep the price they were issued with.</p>
+
+@if (loading()) {
+  <div class="skeleton block"></div>
+} @else if (draft; as draft) {
+  <form class="panel stack" (submit)="$event.preventDefault(); save()">
+    <label>Listing
+      <select name="listing" [ngModel]="slug" (ngModelChange)="pick($event)">
+        @for (item of listings(); track item.slug) {
+          <option [value]="item.slug">{{ item.name }}</option>
+        }
+      </select>
+    </label>
+    <div class="field-grid">
+      <label>Listing name <input name="name" [(ngModel)]="draft.name" required /></label>
+      <label>Host name <input name="hostName" [(ngModel)]="draft.hostName" required /></label>
+      <label>Tagline <input name="tagline" [(ngModel)]="draft.tagline" /></label>
+      <p class="quiet">Shown location: {{ draft.locationLabel }}</p>
+      <p class="quiet">Host phone, host email, and PayPal and Venmo handles are read from server config. This form does not store them.</p>
+      <label>Rate <input type="number" name="nightlyRate" min="0" step="0.01" [(ngModel)]="draft.nightlyRate" /></label>
+      <label>{{ draft.feeLabel || 'Fee' }} <input type="number" name="cleaningFee" min="0" step="0.01" [(ngModel)]="draft.cleaningFee" /></label>
+      <label>Deposit percent <input type="number" name="depositPercent" min="0" max="100" step="0.01" [(ngModel)]="draft.depositPercent" /></label>
+      <label>Minimum {{ draft.rateLabel || 'night' }}s <input type="number" name="minNights" min="1" [(ngModel)]="draft.minNights" /></label>
+      <label>Maximum guests <input type="number" name="maxGuests" min="1" [(ngModel)]="draft.maxGuests" /></label>
+      <label>Check-in time <input name="checkInTime" [(ngModel)]="draft.checkInTime" /></label>
+      <label>Checkout time <input name="checkOutTime" [(ngModel)]="draft.checkOutTime" /></label>
+    </div>
+    <label>Description <textarea name="description" rows="4" [(ngModel)]="draft.description"></textarea></label>
+    <label>House rules <textarea name="houseRules" rows="4" [(ngModel)]="draft.houseRules"></textarea></label>
+    <label>Cancellation <textarea name="cancellationPolicy" rows="4" [(ngModel)]="draft.cancellationPolicy"></textarea></label>
+    <label>Check-in instructions <textarea name="checkInInstructions" rows="4" [(ngModel)]="draft.checkInInstructions"></textarea></label>
+    <button class="primary" type="submit" [disabled]="saving()">{{ saving() ? 'Saving' : 'Save settings' }}</button>
+  </form>
+
+  <form class="panel stack" (submit)="$event.preventDefault(); saveSignature()">
+    <h2>Host signature</h2>
+    <p class="quiet">This name is written on every agreement.</p>
+    <label>Signature name <input name="hostSignatureName" [(ngModel)]="draft.hostSignatureName" /></label>
+    <p class="script preview">{{ draft.hostSignatureName || 'Signature' }}</p>
+    @if (draft.hasHostSignature) {
+      <img class="signature-preview" [src]="'api/property/signature?slug=' + slug + '&v=' + signatureStamp()" alt="Saved host signature" />
+    }
+    <button class="primary" type="submit" [disabled]="saving()">Save signature</button>
+  </form>
+}
+
+@if (notice()) {
+  <p class="hint">{{ notice() }}</p>
+}
+@if (error()) {
+  <p class="banner" role="alert">{{ error() }}</p>
+}

@@ -1,0 +1,160 @@
+/* Shape + buttons, RUBRIC v2.3 ("Shape", "Buttons") mapped for this app.
+   Loaded last (angular.json styles): the one place radius and button recipes are decided for the whole app. */
+:root {
+  --r-xs: 4px; --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 24px; --r-full: 9999px;
+  --btn-h-sm: 36px; --btn-px-sm: 16px; --btn-fs-sm: 14px;
+  --btn-h-md: 44px; --btn-px-md: 24px; --btn-fs-md: 14px;
+  --btn-h-lg: 48px; --btn-px-lg: 24px; --btn-fs-lg: 16px;
+  --btn-fw: 500; --btn-gap: 8px;
+  --btn-primary-bg: var(--ink);
+  --btn-primary-fg: var(--paper);
+  --btn-primary-bg-hover: color-mix(in srgb, var(--ink) 88%, var(--paper));
+  --btn-secondary-border: var(--open); /* Booking has no --field-line: --open is 3.48:1 light, 4.63:1 dark */
+  --btn-secondary-bg-hover: color-mix(in srgb, var(--ink) 6%, transparent);
+  --btn-soft-bg: color-mix(in srgb, var(--ink) 6%, transparent);
+  --btn-soft-bg-hover: color-mix(in srgb, var(--ink) 10%, transparent);
+  --btn-ghost-bg-hover: color-mix(in srgb, var(--ink) 6%, transparent);
+  --btn-disabled-opacity: 0.4;
+  --btn-danger-bg: #b42318; --btn-danger-fg: #ffffff;
+}
+[data-theme='dark'] { --btn-danger-bg: #f97066; --btn-danger-fg: var(--paper); }
+
+/* ---------- buttons: shared pill recipe (md 44 default) ---------- */
+.primary, .reserve, .ghost, .toggle button, a.pay-button, .pg-all, .gal-btn, .text-btn, .pp .ghost {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--btn-gap);
+  height: var(--btn-h-md); min-height: var(--btn-h-md); min-width: var(--btn-h-md);
+  padding: 0 var(--btn-px-md);
+  border-radius: var(--r-full);
+  font-size: var(--btn-fs-md); font-weight: var(--btn-fw); line-height: 1; letter-spacing: 0; text-transform: none;
+  white-space: nowrap; text-decoration: none; box-shadow: none;
+  cursor: pointer;
+  transition: background-color var(--dur-xs) var(--ease-standard), transform var(--dur-xs) var(--ease-standard);
+}
+/* primary: ink fill, paper label, no border (the terracotta fill is gone: one accent) */
+.primary, .reserve { background: var(--btn-primary-bg); color: var(--btn-primary-fg); border: 0; }
+/* the one page CTA per view: Reserve on the desktop booking card is lg 48 */
+.pp-aside .reserve, .bk-actions .reserve { height: var(--btn-h-lg); min-height: var(--btn-h-lg); font-size: var(--btn-fs-lg); padding: 0 var(--btn-px-lg); }
+.bk-bar .reserve, .pp-cta .reserve { height: var(--btn-h-md); min-height: var(--btn-h-md); }
+/* secondary: outline pill */
+.ghost, .toggle button, a.pay-button, .pp .ghost { background: transparent; color: var(--ink); border: 1px solid var(--btn-secondary-border); }
+/* on media / below the hero: raised fill, 1px --open */
+.pg-all { background: var(--raised); color: var(--ink); border: 1px solid var(--btn-secondary-border); }
+/* viewer (fixed dark surface) */
+.gal-btn { background: transparent; color: inherit; border: 1px solid #8f8a80; }
+/* ghost */
+.text-btn { background: transparent; border: 0; color: var(--ink); padding: 0 16px; }
+/* selected toggle: 2px terracotta-deep border inside the pill, ink label (the one selected accent) */
+.toggle button.active { background: transparent; color: var(--ink); border-color: transparent; box-shadow: inset 0 0 0 2px var(--terracotta-deep); }
+
+/* icon buttons: soft, square, full, 44 */
+.icon-btn, .theme-toggle, .bk-step {
+  display: inline-grid; place-items: center;
+  width: var(--btn-h-md); height: var(--btn-h-md); min-width: var(--btn-h-md); min-height: var(--btn-h-md); padding: 0;
+  border: 0; border-radius: var(--r-full); background: var(--btn-soft-bg); color: var(--ink);
+  font-size: var(--btn-fs-md); font-weight: var(--btn-fw); line-height: 1; cursor: pointer;
+  transition: background-color var(--dur-xs) var(--ease-standard), transform var(--dur-xs) var(--ease-standard);
+}
+.theme-toggle { width: 72px; padding: 0; } /* fixed: the label swaps Light/Dark, layout must not move between schemes */
+.modal[data-variant='viewer'] .icon-btn { background: rgb(240 238 230 / 0.12); color: inherit; }
+.gal-nav { border-radius: var(--r-full); width: var(--btn-h-lg); height: var(--btn-h-lg); }
+
+/* hover (fine pointers): background only */
+@media (hover: hover) and (pointer: fine) {
+  .primary:hover:not(:disabled), .reserve:hover:not(:disabled) { background: var(--btn-primary-bg-hover); }
+  .ghost:hover:not(:disabled), .toggle button:hover:not(:disabled), a.pay-button:hover, .pp .ghost:hover:not(:disabled), .pg-all:hover { background: var(--btn-secondary-bg-hover); }
+  .pg-all:hover { background: color-mix(in srgb, var(--ink) 6%, var(--raised)); }
+  .text-btn:hover:not(:disabled), .chip:hover:not(.active) { background: var(--btn-ghost-bg-hover); }
+  .icon-btn:hover:not(:disabled), .theme-toggle:hover, .bk-step:hover:not(:disabled) { background: var(--btn-soft-bg-hover); }
+  .gal-btn:hover, .gal-nav:hover:not(:disabled), .modal[data-variant='viewer'] .icon-btn:hover { background: rgb(240 238 230 / 0.18); }
+  .primary:hover, .reserve:hover, .ghost:hover, .toggle button:hover, .pp .ghost:hover, .pg-all:hover { border-color: var(--btn-secondary-border); }
+  .primary:hover, .reserve:hover { border-color: transparent; }
+}
+/* press */
+.primary:active:not(:disabled), .reserve:active:not(:disabled), .ghost:active:not(:disabled), .toggle button:active:not(:disabled),
+a.pay-button:active, .pg-all:active, .gal-btn:active, .text-btn:active:not(:disabled), .icon-btn:active:not(:disabled),
+.theme-toggle:active, .bk-step:active:not(:disabled), .gal-nav:active:not(:disabled), .chip:active, .ns-seg button:active {
+  transform: scale(0.98);
+}
+/* disabled */
+.primary:disabled, .reserve:disabled, .ghost:disabled, .toggle button:disabled, .text-btn:disabled, .icon-btn:disabled, .bk-step:disabled, .gal-nav:disabled {
+  opacity: var(--btn-disabled-opacity); cursor: not-allowed; transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .primary:active, .reserve:active, .ghost:active, .toggle button:active, .pg-all:active, .gal-btn:active, .text-btn:active,
+  .icon-btn:active, .theme-toggle:active, .bk-step:active, .gal-nav:active, .chip:active, .ns-seg button:active { transform: none; }
+}
+/* focus: 2px ink, offset 2, follows the radius */
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* ---------- chips (room nav): 44, 1px --open, full; selected = 2px terracotta-deep inside ---------- */
+.tour-chips .chip { height: var(--btn-h-md); min-height: var(--btn-h-md); padding: 0 16px; border: 1px solid var(--btn-secondary-border); border-radius: var(--r-full); background: transparent; box-shadow: none; transition: background-color var(--dur-xs) var(--ease-standard), transform var(--dur-xs) var(--ease-standard); }
+.tour-chips .chip.active { border-color: transparent; box-shadow: inset 0 0 0 2px var(--terracotta-deep); }
+.tour-chips .chip:focus-visible { outline-offset: 2px; }
+
+/* ---------- segmented control (3D toolbar): soft full track, padding 4, ink thumb ---------- */
+.ns-toolbar { border-radius: var(--r-full); }
+.ns-seg { padding: 4px; gap: 0; border-radius: var(--r-full); background: var(--btn-soft-bg); }
+.ns-seg + .ns-seg { border-left: 0; padding-left: 4px; margin-left: 0; }
+.ns-seg button { position: relative; height: var(--btn-h-sm); min-height: var(--btn-h-sm); min-width: var(--btn-h-sm); padding: 0 var(--btn-px-sm); border: 0; border-radius: var(--r-full); font-weight: var(--btn-fw); color: var(--ink-soft); line-height: 1; }
+.ns-seg button::after { content: ''; position: absolute; inset: -4px 0; } /* 44px hit area */
+.ns-seg button.active { background: var(--ink); color: var(--paper); border: 0; }
+@media (hover: hover) and (pointer: fine) { .ns-seg button:hover:not(.active) { background: var(--btn-soft-bg); color: var(--ink); } }
+/* under 1024 a 36 button is never the only touch target: segments go to 44 inside a 52 track */
+@media (max-width: 1023px) {
+  .ns-seg button { height: var(--btn-h-md); min-height: var(--btn-h-md); min-width: var(--btn-h-md); }
+  .ns-seg button::after { content: none; }
+}
+@media (max-width: 600px) { .ns-toolbar { border-radius: var(--r-xl); } }
+
+/* ---------- fields: inputs, selects, date groups --r-sm ---------- */
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']), textarea, select {
+  border: 1px solid var(--btn-secondary-border); border-radius: var(--r-sm); padding: 10px 14px; background: var(--raised);
+}
+.bk-dates { border-radius: var(--r-sm); overflow: hidden; }
+.bk-dates button + button { border-left: 1px solid var(--open); }
+.bk-guests { border-radius: var(--r-sm); }
+.pad, .signature-preview { border: 1px solid var(--line); border-radius: var(--r-sm); }
+.day { border-radius: 0; } /* calendar day cells stay square (RUBRIC v2.3 square list) */
+
+/* ---------- cards and panels --r-md ---------- */
+.bk, .sleep-card, .panel, .panel-head, .chart-panel, .cards, .cards a, .cards li, .banner, .skeleton, .metrics article { border-radius: var(--r-md); }
+.sleep-card { overflow: hidden; }
+
+/* ---------- photos --r-lg; hero grid per tile: outer 16, inner 4 ---------- */
+.pg-cell { border-radius: var(--r-xs); }
+.pg-cell.pg-main { border-radius: var(--r-lg) var(--r-xs) var(--r-xs) var(--r-lg); }
+.pg-grid > .pg-cell:nth-child(3) { border-top-right-radius: var(--r-lg); }
+.pg-grid > .pg-cell:nth-child(5) { border-bottom-right-radius: var(--r-lg); }
+.pg-few .pg-cell.pg-main, .pg-few3 .pg-cell.pg-main { border-radius: var(--r-lg); }
+.pg-cell:focus-visible { outline-offset: 2px; }
+.room-shot, .sleep-img, .allp-shot { border-radius: var(--r-lg); overflow: hidden; }
+.sleep-card .sleep-img { border-radius: var(--r-md) var(--r-md) 0 0; }
+.hero-photo, .gallery img, .listing img, .qr, .map, .pp-map .map, .skeleton.block { border-radius: var(--r-lg); }
+.pp-map .map { overflow: hidden; }
+.gal-img { border-radius: var(--r-lg); }
+.pp-3d .stage, .stage { border-radius: var(--r-lg); overflow: hidden; }
+.stage canvas { border-radius: 0; }
+.stage:fullscreen, .stage:-webkit-full-screen, .stage.ns-full { border-radius: 0; }
+
+/* Leaflet zoom: 44 soft icon buttons, full (SHAPE-APPLY Booking row) */
+.leaflet-bar { border: 0 !important; border-radius: var(--r-full) !important; background: transparent; box-shadow: none !important; display: grid; gap: 8px; }
+.leaflet-bar a, .pp-map .leaflet-bar.leaflet-control-zoom a, .leaflet-bar a:first-child, .leaflet-bar a:last-child {
+  width: 44px !important; height: 44px !important; line-height: 44px !important; border: 0 !important; border-radius: var(--r-full) !important;
+  background: color-mix(in srgb, var(--ink) 10%, var(--raised)) !important; color: var(--ink) !important;
+}
+
+/* ---------- dialogs --r-xl; full-screen and viewer 0; sheets top corners ---------- */
+.modal { border-radius: var(--r-xl); }
+.modal-box { border-radius: var(--r-xl); }
+.modal-body { border-radius: 0 0 var(--r-xl) var(--r-xl); }
+.modal[data-variant='paper'] .modal-box, .modal[data-variant='viewer'] .modal-box, .modal[data-variant='paper'] .modal-body { border-radius: 0; }
+.modal[data-variant='paper'], .modal[data-variant='viewer'] { border-radius: 0; }
+@media (max-width: 1023px) { .modal[data-variant='sheet'], .modal[data-variant='sheet'] .modal-box { border-radius: var(--r-xl) var(--r-xl) 0 0; } .modal[data-variant='sheet'] .modal-body { border-radius: 0; } }
+@media (max-width: 767px) { .modal:not([data-variant='viewer']):not([data-variant='paper']), .modal .modal-box, .modal .modal-body { border-radius: 0; } }
+
+/* ---------- square by rule: phone full-bleed hero, bottom bar, header ---------- */
+.bk-bar, .mast { border-radius: 0; }
+@media (max-width: 767px) {
+  .pg-carousel, .pg-slide { border-radius: 0; }
+  .gal-img { border-radius: 0; }
+}

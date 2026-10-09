@@ -1,0 +1,30 @@
+<div class="calendar">
+  <div class="calendar-bar">
+    <button type="button" class="text-btn" (click)="shift(-1)" aria-label="Previous month">Previous</button>
+    <h2>{{ title() }}</h2>
+    <button type="button" class="text-btn" (click)="shift(1)" aria-label="Next month">Next</button>
+  </div>
+  <div class="weekdays" aria-hidden="true">
+    <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+  </div>
+  <div class="days" role="group" aria-label="Availability" [class.slide-forward]="slide() === 'slide-forward'" [class.slide-back]="slide() === 'slide-back'">
+    @for (cell of cells(); track $index) {
+      @if (cell.date) {
+        <button type="button" [class]="'day ' + mark(cell)" (click)="select(cell)" [attr.aria-label]="cell.label">
+          {{ cell.day }}
+        </button>
+      } @else {
+        <span class="day outside"></span>
+      }
+    }
+  </div>
+  <div class="key" aria-label="Calendar key">
+    <span><i class="swatch open"></i> Open</span>
+    <span><i class="swatch held"></i> Held</span>
+    <span><i class="swatch booked"></i> Booked</span>
+    <span><i class="swatch blocked"></i> Held by another stay</span>
+  </div>
+  @if (note()) {
+    <p class="hint">{{ note() }}</p>
+  }
+</div>

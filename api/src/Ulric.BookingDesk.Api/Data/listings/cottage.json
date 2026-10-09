@@ -1,0 +1,181 @@
+{
+  "slug": "cottage",
+  "unitLabel": "Cottage",
+  "airbnbId": "demo-cottage",
+  "airbnbUrl": "https://example.com/stays/cottage",
+  "name": "Garden Cottage with Fireplace",
+  "sortOrder": 4,
+  "invoicePrefix": "HC",
+  "nightlyRate": 119.5,
+  "maxGuests": 2,
+  "bedrooms": 1,
+  "beds": 1,
+  "baths": 1,
+  "rating": 4.95,
+  "reviewCount": 18,
+  "tagline": "1 bedroom, sleeps 2",
+  "summary": "A small fictional cottage at the back of the garden in Fernhollow, with a fireplace, a full kitchen and outdoor seating.",
+  "sections": [
+    {
+      "title": "The space",
+      "text": "One open room with a queen bed, a full kitchen, a small dining table and a fireplace corner with a smart TV."
+    },
+    {
+      "title": "Guest access",
+      "text": "The whole cottage, the garden seating and one parking space behind the gate."
+    },
+    {
+      "title": "Other things to note",
+      "text": "This is sample copy for a fictional listing. Replace it with your own listing text."
+    }
+  ],
+  "houseRules": "Check-in after 4:00 PM Checkout before 11:00 AM Self check-in with smart lock 2 guests maximum No parties or events No smoking Additional rules. Please start the dishwasher before you leave.",
+  "checkInTime": "4:00 PM",
+  "checkOutTime": "11:00 AM",
+  "checkInInstructions": "Self check-in with smart lock. The host sends the entry details after the request is approved.",
+  "contains": [],
+  "amenities": [
+    {
+      "group": "Bathroom",
+      "items": [
+        "Hair dryer",
+        "Shampoo",
+        "Body soap",
+        "Hot water"
+      ]
+    },
+    {
+      "group": "Bedroom and laundry",
+      "items": [
+        "Essentials",
+        "Hangers",
+        "Bed linens",
+        "Extra pillows and blankets"
+      ]
+    },
+    {
+      "group": "Entertainment",
+      "items": [
+        "TV with streaming apps",
+        "Books and reading material"
+      ]
+    },
+    {
+      "group": "Heating and cooling",
+      "items": [
+        "Heating",
+        "Portable fan"
+      ]
+    },
+    {
+      "group": "Home safety",
+      "items": [
+        "Smoke alarm",
+        "Carbon monoxide alarm",
+        "Fire extinguisher",
+        "First aid kit"
+      ]
+    },
+    {
+      "group": "Internet and office",
+      "items": [
+        "Wifi",
+        "Dedicated workspace"
+      ]
+    },
+    {
+      "group": "Kitchen and dining",
+      "items": [
+        "Kitchen",
+        "Refrigerator",
+        "Microwave",
+        "Coffee maker",
+        "Dishes and silverware"
+      ]
+    },
+    {
+      "group": "Outdoor",
+      "items": [
+        "Private patio or deck",
+        "Outdoor furniture"
+      ]
+    },
+    {
+      "group": "Parking and facilities",
+      "items": [
+        "Free parking on premises"
+      ]
+    },
+    {
+      "group": "Services",
+      "items": [
+        "Self check-in",
+        "Long-term stays allowed"
+      ]
+    }
+  ],
+  "sleeping": [],
+  "subratings": [
+    {
+      "name": "Cleanliness",
+      "score": "4.9"
+    },
+    {
+      "name": "Accuracy",
+      "score": "4.9"
+    },
+    {
+      "name": "Check-in",
+      "score": "5.0"
+    },
+    {
+      "name": "Communication",
+      "score": "5.0"
+    },
+    {
+      "name": "Location",
+      "score": "4.8"
+    },
+    {
+      "name": "Value",
+      "score": "4.8"
+    }
+  ],
+  "photos": [
+    {
+      "src": "photos/stock/blue-white-kitchen-interior-unsplash.jpg",
+      "caption": "",
+      "room": "Full kitchen"
+    },
+    {
+      "src": "photos/stock/kitchen-unsplash.jpg",
+      "caption": "",
+      "room": "Full kitchen"
+    },
+    {
+      "src": "photos/stock/ali-inay-2015-02-25-unsplash.jpg",
+      "caption": "",
+      "room": "Bedroom"
+    },
+    {
+      "src": "photos/stock/hotel-bedroom-windows-unsplash.jpg",
+      "caption": "",
+      "room": "Bedroom"
+    },
+    {
+      "src": "photos/stock/bathroom-with-shower-48877908032.jpg",
+      "caption": "",
+      "room": "Full bathroom"
+    },
+    {
+      "src": "photos/stock/bathroom-sink.jpg",
+      "caption": "",
+      "room": "Full bathroom"
+    },
+    {
+      "src": "photos/stock/evergreen-dorrington-pinecone-cottage-exterior.jpg",
+      "caption": "",
+      "room": "Exterior"
+    }
+  ]
+}

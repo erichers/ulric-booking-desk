@@ -1,0 +1,14 @@
+# Example for MAMP Apache. Copy to the deployed folder as .htaccess.
+# The folder is served at http://localhost:8888/apps/ulric-booking-desk/
+# Proxy the API. MAMP needs proxy_module and proxy_http_module enabled.
+
+RewriteEngine On
+RewriteBase /apps/ulric-booking-desk/
+
+RewriteRule ^api(/.*)?$ http://127.0.0.1:5080/api$1 [P,L]
+
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+RewriteRule ^ index.html [L]
